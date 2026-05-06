@@ -1,0 +1,32 @@
+# =====================
+# ENVIRONNEMENT PYTHON (DJANGO)
+# =====================
+env/
+venv/
+backend/env/
+__pycache__/
+*.pyc
+db.sqlite3
+
+# =====================
+# DJANGO
+# =====================
+*.log
+
+# =====================
+# ANGULAR
+# =====================
+frontend/node_modules/
+frontend/dist/
+
+# =====================
+# SYSTEME
+# =====================
+.DS_Store
+Thumbs.db
+
+# =====================
+# IDE
+# =====================
+.vscode/
+.idea/

@@ -6,6 +6,8 @@ venv/
 __pycache__/
 *.pyc
 db.sqlite3
+.env          
+*.env         
 
 # ======================
 # ANGULAR
@@ -19,3 +21,9 @@ frontend/dist/
 .DS_Store
 .vscode/
 .idea/
+# ======================
+# ANGULAR
+# ======================
+frontend/GRH/node_modules/
+frontend/GRH/.angular/
+frontend/GRH/dist/

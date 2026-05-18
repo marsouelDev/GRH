@@ -1,0 +1,52 @@
+/* Centre tout sur la page */
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f0fdf4;
+  font-family: Arial, sans-serif;
+}
+
+/* Conteneur */
+.center {
+  display: flex;
+  flex-direction: column; /* empile image → texte → lien */
+  align-items: center; /* centre horizontalement */
+  gap: 15px; /* espace entre les éléments */
+  padding: 30px 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+/* Image */
+.center img {
+  width: 770px;
+  right: 500px;
+}
+
+/* Texte */
+.center h1 {
+  font-size: 22px;
+  color: #065f46;
+}
+
+/* Lien */
+.route {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: #059669;
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+/* Hover */
+.route:hover {
+  background: #047857;
+  transform: translateY(-2px);
+}

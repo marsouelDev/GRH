@@ -8,6 +8,7 @@ class Employe(Utilisateur):
     date_naissance = models.DateField(null=True, blank=True)
     telephone   = models.CharField(max_length=20, blank=True)
     salaire     = models.FloatField(default=0)
+    
  
    
     def save(self, *args, **kwargs):

@@ -1,36 +1,28 @@
-"""
-URL configuration for GRH project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include
+from drf_spectacular.views import (SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView)
+from drf_spectacular.utils import extend_schema_view, extend_schema 
+from administrateur.serializers import MyTokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
 
-from django.contrib import admin
-from django.urls import path
-
-from drf_spectacular.views import SpectacularAPIView,SpectacularSwaggerView,SpectacularRedocView
- 
-
+# Décoration des vues natives de SimpleJWT pour Swagger
+TokenRefreshViewDecorated = extend_schema_view(post=extend_schema(summary="Rafraîchir le token d'accès", tags=["Authentification"]))(TokenRefreshView)
+TokenBlacklistViewDecorated = extend_schema_view(post=extend_schema(summary="Déconnexion (Blacklist du token)", tags=["Authentification"]))(TokenBlacklistView)
 
 urlpatterns = [
-
     path('admin/', admin.site.urls),
-    path('api/schema/',SpectacularAPIView.as_view(),name='schema'),
-    path('api/docs/',SpectacularSwaggerView.as_view(url_name='schema'),name='swagger-ui'),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-
+   
+    path('api/login/', MyTokenObtainPairView.as_view(), name='login'),
+    
+    path('api/logout/', TokenBlacklistViewDecorated.as_view(), name='token_blacklist'),
+    path('api/refresh/', TokenRefreshViewDecorated.as_view(), name='refresh'),
+    
     path('', include('employees.urls')),
     path('', include('administrateur.urls')),
+    path('', include('RH.urls')),
+    path('', include('presences.urls')),
+    path('', include('conges.urls')),
 ]

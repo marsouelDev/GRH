@@ -1,0 +1,62 @@
+<aside [class]="getSidebarClass()">
+
+    <!-- Logo -->
+    <div class="sidebar__logo">
+        <div class="sidebar__logo-icon">
+            <i class="ti ti-users-group" aria-hidden="true"></i>
+        </div>
+        <span class="sidebar__logo-text">RH Manager</span>
+    </div>
+
+    <!-- Navigation principale -->
+    <div class="sidebar__section">Principal</div>
+
+    <a class="sidebar__item" routerLink="/dashboard" routerLinkActive="sidebar__item--active">
+        <i class="ti ti-layout-dashboard" aria-hidden="true"></i>
+        <span>Dashboard</span>
+    </a>
+
+    <a class="sidebar__item" routerLink="/employees" routerLinkActive="sidebar__item--active" *ngIf="isAdminOrRH()">
+        <i class="ti ti-users" aria-hidden="true"></i>
+        <span>Employés</span>
+    </a>
+
+    <a class="sidebar__item" routerLink="/conges" routerLinkActive="sidebar__item--active">
+        <i class="ti ti-beach" aria-hidden="true"></i>
+        <span>Congés</span>
+    </a>
+
+    <a class="sidebar__item" routerLink="/presences" routerLinkActive="sidebar__item--active">
+        <i class="ti ti-calendar-check" aria-hidden="true"></i>
+        <span>Présences</span>
+    </a>
+
+    <!-- Section admin uniquement -->
+    <ng-container *ngIf="isAdmin()">
+        <div class="sidebar__section">Administration</div>
+
+        <a class="sidebar__item" routerLink="/security" routerLinkActive="sidebar__item--active">
+            <i class="ti ti-shield-check" aria-hidden="true"></i>
+            <span>Sécurité</span>
+        </a>
+
+        <a class="sidebar__item" routerLink="/reports" routerLinkActive="sidebar__item--active">
+            <i class="ti ti-chart-bar" aria-hidden="true"></i>
+            <span>Rapports</span>
+        </a>
+
+        <a class="sidebar__item" routerLink="/settings" routerLinkActive="sidebar__item--active">
+            <i class="ti ti-settings" aria-hidden="true"></i>
+            <span>Paramètres</span>
+        </a>
+    </ng-container>
+
+    <!-- Bas de sidebar -->
+    <div class="sidebar__bottom">
+        <div class="sidebar__status">
+            <span class="sidebar__status-dot"></span>
+            Système opérationnel
+        </div>
+    </div>
+
+</aside>

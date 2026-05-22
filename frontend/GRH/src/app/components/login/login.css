@@ -1,0 +1,118 @@
+/* Fond de la page globale */
+.login-page {
+  background-color: #faf9f6;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Container de la carte principale */
+.login-card {
+  width: 100%;
+  max-width: 950px;
+  border-radius: 20px !important;
+}
+
+/* 🌟 NOUVEAU : Force les deux colonnes à avoir la même hauteur stricte */
+.row-equal {
+  display: flex;
+  align-items: stretch;
+}
+
+.row-equal > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Couleur bleu nuit */
+.bg-dark-blue {
+  background-color: #161d32;
+}
+
+.btn-dark-blue {
+  background-color: #161d32;
+  border: none;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+}
+
+.btn-dark-blue:hover:not([disabled]) {
+  background-color: #232d4b;
+}
+
+.btn-dark-blue:active:not([disabled]) {
+  transform: scale(0.98);
+}
+
+.btn-dark-blue:disabled {
+  background-color: #161d32;
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Icône du logo */
+.logo-icon {
+  background-color: rgba(255, 255, 255, 0.1);
+  width: 55px;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+/* Alignement interne du formulaire */
+.form-container {
+  max-width: 380px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.custom-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+/* Inputs personnalisés */
+.custom-input {
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 0.6rem 1rem !important;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.custom-input:focus {
+  border-color: #161d32 !important;
+  box-shadow: 0 0 0 3px rgba(22, 29, 50, 0.15) !important;
+}
+
+/* 🌟 NOUVEAU : Style pour l'icône de visibilité du mot de passe */
+.password-toggle-icon {
+  cursor: pointer;
+  color: #a0aec0;
+  font-size: 1.1rem;
+  transition: color 0.15s ease;
+  z-index: 10;
+}
+
+.password-toggle-icon:hover {
+  color: #161d32;
+}
+
+.btn-signin {
+  border-radius: 10px !important;
+  font-size: 0.95rem;
+  min-height: 42px; /* Assure une hauteur stable avec ou sans le spinner */
+}
+
+.small-error {
+  font-size: 0.8rem;
+  display: block;
+  margin-top: 4px;
+}
+
+.copyright-text {
+  font-size: 0.7rem;
+  letter-spacing: 0.2px;
+}

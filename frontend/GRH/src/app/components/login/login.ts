@@ -1,68 +1,62 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { NgIf } from '@angular/common';
-import { email } from '@angular/forms/signals';
-import { jwtDecode } from 'jwt-decode'; 
-
-interface CustomJwtPayload {
-  role?: string;      // Le champ rôle envoyé par votre backend
-  user_id?: number;
-  exp?: number;
-}
+import { AuthService } from '../../services/auth/auth.service';
 
 @Component({
   selector: 'app-login',
-  imports: [ ReactiveFormsModule,NgIf],
+  imports: [ReactiveFormsModule, NgIf],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
 export class Login {
-   loginForm: FormGroup;
-  errorMessage: string = '';
+  loginForm: FormGroup;
+  errorMessage: string | null = null;
+  isLoading: boolean = false;
+  showPassword: boolean = false;
 
-  constructor(
-    private fb: FormBuilder,
-    private http: HttpClient,
-    private router: Router
-  ) {
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
+  private authService = inject(AuthService);
+
+  constructor() {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required]]
+      password: ['', [Validators.required]],
     });
   }
 
-  onSubmit(): void {
-    if (this.loginForm.invalid) return;
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
 
-    this.http.post<any>('http://localhost:8000/api/token/', this.loginForm.value).subscribe({
-      next: (response) => {
-        //  Sauvegarde du token d'accès pour l'intercepteur
-        localStorage.setItem('access_token', response.access);
+  onSubmit(): void {
+    if (this.loginForm.invalid || this.isLoading) return;
+
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    // Utilisation de la méthode centralisée du service
+    this.authService.login(this.loginForm.value).subscribe({
+      next: () => {
         
-        try {
-          //  Décodage du token pour récupérer le vrai rôle de l'utilisateur
-          const decoded = jwtDecode<CustomJwtPayload>(response.access);
-          
-          //  Récupération du rôle (si absent du token, on applique 'EMPLOYE' par défaut)
-          const userRole = decoded.role || 'EMPLOYE'; 
-          
-        
-          localStorage.setItem('user_role', userRole);
-          
-        
-          this.router.navigate(['/employes']);
-          
-        } catch (error) {
-         
-          localStorage.setItem('user_role', 'EMPLOYE');
-          this.router.navigate(['/employes']);
+        this.isLoading = false;
+
+        if (this.authService.isAdmin()) {
+          this.router.navigate(['/page']);
+        } else if (this.authService.isRH()) {
+          // Correction ici : auth -> authService
+          this.router.navigate(['/dashboard-rh']);
+        } else {
+          this.router.navigate(['/page']);
         }
       },
       error: (err) => {
-        this.errorMessage = "Email ou mot de passe incorrect.";
-      }
+        this.isLoading = false;
+        this.errorMessage = 'Email ou mot de passe incorrect.';
+        console.error(err);
+      },
     });
   }
 }

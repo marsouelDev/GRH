@@ -1,0 +1,83 @@
+<div *ngIf="messageNotification" class="alert alert-success"
+    style="padding: 10px; background-color: #d4edda; margin-bottom: 15px; color: #155724; border: 1px solid #c3e6cb;">
+    {{ messageNotification }}
+</div>
+
+
+<div *ngIf="modeAffichage === 'liste'">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>Liste des Employés</h3>
+        <!-- Bouton de redirection vers le formulaire d'ajout -->
+        <button routerLink="/employees/create"
+            style="padding: 8px 16px; background-color: #007bff; color: white; border: none; cursor: pointer;">
+            + Ajouter un employé
+        </button>
+    </div>
+
+    <table border="1" style="width: 100%; text-align: left; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f2f2f2;">
+                <th style="padding: 8px;">Nom complet</th>
+                <th style="padding: 8px;">Email</th>
+                <th style="padding: 8px;">Téléphone</th>
+                <th style="padding: 8px;">Salaire</th>
+                <th style="padding: 8px;">Statut</th>
+                <th style="padding: 8px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let emp of employes">
+                <td style="padding: 8px;">{{ emp.nom }} {{ emp.prenom }}</td>
+                <td style="padding: 8px;">{{ emp.email }}</td>
+                <td style="padding: 8px;">{{ emp.telephone || '-' }}</td>
+                <td style="padding: 8px;">{{ emp.salaire | number }} €</td>
+                <td style="padding: 8px;">
+                    <span [style.color]="emp.is_active ? 'green' : 'red'">
+                        {{ emp.is_active ? 'Actif' : 'Inactif' }}
+                    </span>
+                </td>
+                <td style="padding: 8px;">
+                    <button (click)="selectionnerPourModification(emp)" style="margin-right: 5px;">Modifier</button>
+                    <button *ngIf="emp.is_active" (click)="desactiverCompte(emp.id!)"
+                        style="background-color: #ffdddd; color: red; border: 1px solid red;">Désactiver</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div *ngIf="modeAffichage === 'creation'">
+    <h3>Créer un Nouvel Employé</h3>
+    <form (ngSubmit)="creerCompte()" #f="ngForm"
+        style="display: flex; flex-direction: column; gap: 10px; max-width: 300px;">
+        <input [(ngModel)]="nouveauEmploye.nom" name="nom" placeholder="Nom" required>
+        <input [(ngModel)]="nouveauEmploye.prenom" name="prenom" placeholder="Prénom" required>
+        <input [(ngModel)]="nouveauEmploye.email" name="email" type="email" placeholder="Email" required>
+        <input [(ngModel)]="nouveauEmploye.telephone" name="telephone" placeholder="Téléphone">
+        <input [(ngModel)]="nouveauEmploye.date_naissance" name="date_naissance" type="date">
+        <input [(ngModel)]="nouveauEmploye.salaire" name="salaire" type="number" placeholder="Salaire">
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button type="submit" [disabled]="!f.valid" style="background-color: green; color: white;">Enregistrer &
+                Envoyer l'Email</button>
+            <button type="button" (click)="retournerALaListe()" style="background-color: #ccc;">Retour</button>
+        </div>
+    </form>
+</div>
+
+
+<div *ngIf="modeAffichage === 'modification' && employeSelectionne">
+    <h3>Modifier : {{ employeSelectionne.nom }} {{ employeSelectionne.prenom }}</h3>
+    <div style="display: flex; flex-direction: column; gap: 10px; max-width: 300px;">
+        <input [(ngModel)]="employeSelectionne.nom" name="editNom" placeholder="Nom">
+        <input [(ngModel)]="employeSelectionne.prenom" name="editPrenom" placeholder="Prénom">
+        <input [(ngModel)]="employeSelectionne.telephone" name="editTelephone" placeholder="Téléphone">
+        <input [(ngModel)]="employeSelectionne.salaire" name="editSalaire" type="number" placeholder="Salaire">
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button (click)="enregistrerModification()"
+                style="background-color: #007bff; color: white;">Sauvegarder</button>
+            <button (click)="retournerALaListe()" style="background-color: #ccc;">Annuler</button>
+        </div>
+    </div>
+</div>

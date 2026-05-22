@@ -1,0 +1,154 @@
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  transition: background 0.3s;
+}
+
+/* Thèmes par rôle */
+.sidebar--admin {
+  background: #1e293b;
+}
+.sidebar--rh {
+  background: #0f3d2e;
+}
+.sidebar--employe {
+  background: #1a1a3e;
+}
+
+/* Logo */
+.sidebar__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 20px 18px;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.sidebar__logo-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar__logo-icon i {
+  font-size: 17px;
+  color: #fff;
+}
+
+.sidebar--admin .sidebar__logo-icon {
+  background: #38bdf8;
+}
+.sidebar--rh .sidebar__logo-icon {
+  background: #34d399;
+}
+.sidebar--employe .sidebar__logo-icon {
+  background: #818cf8;
+}
+
+.sidebar__logo-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* Section label */
+.sidebar__section {
+  padding: 16px 20px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+  flex-shrink: 0;
+}
+
+/* Item de navigation */
+.sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  margin: 1px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+  flex-shrink: 0;
+}
+
+.sidebar__item i {
+  font-size: 17px;
+  width: 20px;
+  text-align: center;
+}
+
+.sidebar__item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Item actif selon le rôle */
+.sidebar__item--active {
+  color: #fff !important;
+}
+
+.sidebar--admin .sidebar__item--active {
+  background: rgba(56, 189, 248, 0.12);
+}
+.sidebar--rh .sidebar__item--active {
+  background: rgba(52, 211, 153, 0.12);
+}
+.sidebar--employe .sidebar__item--active {
+  background: rgba(129, 140, 248, 0.12);
+}
+
+.sidebar--admin .sidebar__item--active i {
+  color: #38bdf8;
+}
+.sidebar--rh .sidebar__item--active i {
+  color: #34d399;
+}
+.sidebar--employe .sidebar__item--active i {
+  color: #818cf8;
+}
+
+/* Bas de sidebar */
+.sidebar__bottom {
+  margin-top: auto;
+  padding: 14px 16px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.sidebar__status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34d399;
+  flex-shrink: 0;
+}

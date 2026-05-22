@@ -1,0 +1,35 @@
+<nav class="navbar">
+
+  <!-- Titre de la page courante -->
+  <div class="navbar__left">
+    <span class="navbar__page-title">Dashboard</span>
+  </div>
+
+  <!-- Actions droite -->
+  <div class="navbar__right">
+
+    <!-- Cloche notifications -->
+    <button class="navbar__icon-btn" aria-label="Notifications">
+      <i class="ti ti-bell" aria-hidden="true"></i>
+    </button>
+
+    <!-- Profil utilisateur -->
+    <div class="navbar__user">
+      <div [class]="getAvatarClass()">{{ getInitiales() }}</div>
+      <div class="navbar__user-info">
+        <span class="navbar__user-name">
+          {{ currentUser.prenom }} {{ currentUser.nom }}
+        </span>
+        <span class="navbar__user-role">{{ getRoleLabel() }}</span>
+      </div>
+      <span [class]="getRoleBadgeClass()">{{ currentUser.role }}</span>
+    </div>
+
+    <!-- Bouton déconnexion -->
+    <button class="navbar__logout-btn" (click)="seDeconnecter()">
+      <i class="ti ti-power" aria-hidden="true"></i>
+      Déconnexion
+    </button>
+
+  </div>
+</nav>

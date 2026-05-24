@@ -18,11 +18,12 @@ export class Employee implements OnInit, OnDestroy {
   employes: EmployeModels[] = [];
   nouveauEmploye: EmployeModels = this.initialiserFormulaire();
   employeSelectionne: EmployeModels | null = null;
+  
+  // Variables pour l'affichage des bannières HTML
   messageNotification: string | null = null;
+  messageErreur: string | null = null;
 
   modeAffichage: 'liste' | 'creation' | 'modification' = 'liste';
-
-  // CORRECTION : stocker l'abonnement pour le désinscrire à la destruction
   private routerSub!: Subscription;
 
   constructor(
@@ -36,12 +37,10 @@ export class Employee implements OnInit, OnDestroy {
       .pipe(filter((e) => e instanceof NavigationEnd))
       .subscribe(() => this.analyserUrl());
 
-    // Appel initial au chargement
     this.analyserUrl();
   }
 
   ngOnDestroy(): void {
-    // Nettoyage de l'abonnement pour éviter les fuites mémoire
     this.routerSub?.unsubscribe();
   }
 
@@ -68,8 +67,9 @@ export class Employee implements OnInit, OnDestroy {
       next: (data) => (this.employeSelectionne = data),
       error: (err) => {
         console.error("Erreur lors du chargement de l'employé", err);
+        this.messageErreur = "Impossible de charger cet employé.";
+        this.masquerNotifications();
         this.retournerALaListe();
-        
       },
     });
   }
@@ -81,7 +81,11 @@ export class Employee implements OnInit, OnDestroy {
   chargerEmployes(): void {
     this.employeService.getEmployes().subscribe({
       next: (data) => (this.employes = data),
-      error: (err) => console.error('Erreur de chargement', err),
+      error: (err) => {
+        console.error('Erreur de chargement', err);
+        this.messageErreur = "Erreur de connexion avec le serveur.";
+        this.masquerNotifications();
+      },
     });
   }
 
@@ -95,7 +99,11 @@ export class Employee implements OnInit, OnDestroy {
           this.retournerALaListe();
         }, 3000);
       },
-      error: (err) => console.error('Erreur de création', err),
+      error: (err) => {
+        console.error('Erreur de création', err);
+        this.messageErreur = "Échec de la création de l'employé.";
+        this.masquerNotifications();
+      },
     });
   }
 
@@ -109,24 +117,68 @@ export class Employee implements OnInit, OnDestroy {
         .updateEmploye(this.employeSelectionne.id, this.employeSelectionne)
         .subscribe({
           next: () => {
+            this.messageNotification = "Modifications enregistrées avec succès.";
             this.employeSelectionne = null;
-            this.retournerALaListe();
+            setTimeout(() => {
+              this.messageNotification = null;
+              this.retournerALaListe();
+            }, 2000);
           },
-          error: (err) => console.error('Erreur de modification', err),
+          error: (err) => {
+            console.error('Erreur de modification', err);
+            this.messageErreur = "Échec de la modification.";
+            this.masquerNotifications();
+          },
         });
     }
   }
 
+  activeCompte(id: number): void {
+    this.employeService.activeEmploye(id).subscribe({
+      next: (reponse) => {
+        this.messageNotification = reponse.detail || 'Employé activé avec succès.';
+        
+        // Synchronisation locale
+        const index = this.employes.findIndex(e => e.id === id);
+        if (index !== -1) this.employes[index].is_active = true;
+        if (this.employeSelectionne && this.employeSelectionne.id === id) this.employeSelectionne.is_active = true;
+
+        this.masquerNotifications();
+        this.chargerEmployes();
+      },
+      error: (err) => {
+        console.error("Erreur d'activation", err);
+        this.messageErreur = "Impossible d'activer ce compte.";
+        this.masquerNotifications();
+      },
+    });
+  }
+
   desactiverCompte(id: number): void {
-    if (confirm('Voulez-vous vraiment désactiver cet employé ?')) {
-      this.employeService.deleteEmploye(id).subscribe({
-        next: (reponse) => {
-          alert(reponse.detail);
-          this.chargerEmployes();
-        },
-        error: (err) => console.error('Erreur de désactivation', err),
-      });
-    }
+    this.employeService.deleteEmploye(id).subscribe({
+      next: (reponse) => {
+        this.messageNotification = reponse.detail || 'Employé désactivé avec succès.';
+        
+        // Synchronisation locale
+        const index = this.employes.findIndex(e => e.id === id);
+        if (index !== -1) this.employes[index].is_active = false;
+
+        this.masquerNotifications();
+        this.chargerEmployes();
+      },
+      error: (err) => {
+        console.error('Erreur de désactivation', err);
+        this.messageErreur = "Impossible de désactiver ce compte.";
+        this.masquerNotifications();
+      },
+    });
+  }
+
+  private masquerNotifications(): void {
+    setTimeout(() => {
+      this.messageNotification = null;
+      this.messageErreur = null;
+    }, 3000);
   }
 
   retournerALaListe(): void {

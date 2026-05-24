@@ -44,6 +44,11 @@ INSTALLED_APPS = [
     "RH",
     "presences",
     "conges",
+    "contrats",
+    "justification",
+    "poste",
+    "rapport",
+    "notification"
 ]
 
 MIDDLEWARE = [

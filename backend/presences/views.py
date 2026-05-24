@@ -27,7 +27,6 @@ class BadgerArriveeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Vérifier que c'est bien un Employé
         if not isinstance(request.user, Employe):
             return Response(
                 {"detail": "Seuls les employés peuvent badger l'arrivée."},

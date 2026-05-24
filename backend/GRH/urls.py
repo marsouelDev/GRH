@@ -25,4 +25,13 @@ urlpatterns = [
     path('', include('RH.urls')),
     path('', include('presences.urls')),
     path('', include('conges.urls')),
+    path('', include('contrats.urls')),
+    path('', include('justification.urls')),
+    path('', include('poste.urls')),
+    path('', include('notification.urls')),
+    path('', include('rapport.urls')),
 ]
+
+
+
+

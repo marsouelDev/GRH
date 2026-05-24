@@ -27,8 +27,7 @@ export class EmployeeService {
     return this.http.get<EmployeModels>(`${this.apiUrl}/${id}/`, this.getOptions());
   }
 
-  // CORRECTION : retour typé en 'any' pour récupérer le champ 'notification'
-  // renvoyé par le backend en plus des champs de EmployeModels
+
   createEmploye(employe: EmployeModels): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/`, employe, this.getOptions());
   }
@@ -39,6 +38,9 @@ export class EmployeeService {
 
   deleteEmploye(id: number): Observable<{ detail: string }> {
     return this.http.delete<{ detail: string }>(`${this.apiUrl}/${id}/`, this.getOptions());
+  }
+   activeEmploye(id: number): Observable<{ detail: string }> {
+    return this.http.put<{ detail: string }>(`${this.apiUrl}/${id}/active/`, {}, this.getOptions());
   }
   
 }

@@ -1,21 +1,22 @@
 from rest_framework import serializers
-from .models import RH
+from Users.models import RoleEnum
+from RH.models import RH
 
 class RHSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(
-        write_only=True,
-        required=False,
-        style={'input_type': 'password'}
-    )
+    password = serializers.CharField(write_only=True, required=False)
+    role = serializers.CharField(read_only=True, default="RH")
 
     class Meta:
         model  = RH
-        fields = ['id', 'email', 'password','nom', 'prenom', 'date_naissance','telephone', 'role', 'is_active']
-        read_only_fields = ['role']
+        fields = ['id', 'email', 'password', 'nom', 'prenom', 'date_naissance', 'telephone', 'role', 'is_active']
 
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         instance = RH(**validated_data)
+        instance.role = RoleEnum.RH
+        instance.is_staff = True
+        instance.is_superuser = False
+        
         if password:
             instance.set_password(password)
         instance.save()

@@ -23,4 +23,4 @@ class Administrateur(Utilisateur):
         return f"{self.nom} {self.prenom}"
  
     class Meta:
-        verbose_name = "RH"
+        verbose_name = "Administrateur"

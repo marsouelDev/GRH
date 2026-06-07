@@ -1,0 +1,161 @@
+<!-- Overlay mobile -->
+@if (isMobileOpen()) {
+<div class="sidebar-overlay" (click)="closeMobile()"></div>
+}
+
+<div class="sidebar" [class.mobile-open]="isMobileOpen()" [class.theme-admin]="authService.isAdmin()"
+    [class.theme-rh]="authService.isRH()" [class.theme-employe]="authService.isEmploye()"
+    [class.dark-mode]="isDarkMode">
+
+    <!-- ── Header ── -->
+    <div class="sidebar-header">
+        <div class="logo-wrapper">
+            <!-- ✅ Logo adaptatif selon le thème -->
+            @if (isDarkMode) {
+            <img src="assets/logo/dark rh.png" alt="Logo WorkFlow" class="logo" />
+            } @else {
+            <img src="assets/logo/logo_ordi.png" alt="Logo WorkFlow" class="logo" />
+            }
+        </div>
+        <div class="header-text">
+            <h2 class="app-title">WorkFlow</h2>
+            <span class="role-badge">{{ getRoleLabel() }}</span>
+        </div>
+        <button class="sidebar-close-btn" (click)="closeMobile()" aria-label="Fermer le menu">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <!-- ── Navigation ── -->
+    <nav class="sidebar-nav" aria-label="Navigation principale">
+
+        <!-- ADMIN -->
+        @if (authService.isAdmin()) {
+        <div class="nav-section">
+            <small class="nav-section-title">Administration</small>
+            <a routerLinkActive="active" routerLink="/admin/dashboard-admin" class="nav-item">
+                <i class="bi bi-speedometer2 nav-icon"></i><span>Dashboard</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/administrateurs" class="nav-item">
+                <i class="bi bi-shield-lock nav-icon"></i><span>Administrateurs</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/rh" class="nav-item">
+                <i class="bi bi-people-fill nav-icon"></i><span>Ressources Humaines</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/employees" class="nav-item">
+                <i class="bi bi-people nav-icon"></i><span>Employés</span>
+            </a>
+
+            <small class="nav-section-title">Gestion</small>
+            <a routerLinkActive="active" routerLink="/presences" class="nav-item">
+                <i class="bi bi-clock-history nav-icon"></i><span>Présences</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/conges" class="nav-item">
+                <i class="bi bi-hourglass-split nav-icon"></i><span>Congés</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/contrats" class="nav-item">
+                <i class="bi bi-file-earmark-text nav-icon"></i><span>Contrats</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/postes" class="nav-item">
+                <i class="bi bi-briefcase nav-icon"></i><span>Postes</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/justifications" class="nav-item">
+                <i class="bi bi-file-earmark-text-fill nav-icon"></i><span>Justifications</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/rapport" class="nav-item">
+                <i class="bi bi-bar-chart-fill nav-icon"></i><span>Rapports</span>
+            </a>
+
+            <small class="nav-section-title">Général</small>
+            <a routerLinkActive="active" routerLink="/administrateurs/profil" class="nav-item">
+                <i class="bi bi-person-circle nav-icon"></i><span>Mon Profil</span>
+            </a>
+        </div>
+        }
+
+        <!-- RH -->
+        @if (authService.isRH()) {
+        <div class="nav-section">
+            <small class="nav-section-title">Ressources Humaines</small>
+            <a routerLinkActive="active" routerLink="/rh/dashboard-rh" class="nav-item">
+                <i class="bi bi-grid-1x2-fill nav-icon"></i><span>Dashboard RH</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/rh" class="nav-item">
+                <i class="bi bi-people-fill nav-icon"></i><span>Ressources Humaines</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/employees" class="nav-item">
+                <i class="bi bi-people nav-icon"></i><span>Employés</span>
+            </a>
+
+            <small class="nav-section-title">Gestion</small>
+            <a routerLinkActive="active" routerLink="/presences" class="nav-item">
+                <i class="bi bi-clock-history nav-icon"></i><span>Présences</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/conges" class="nav-item">
+                <i class="bi bi-hourglass-split nav-icon"></i><span>Congés</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/contrats" class="nav-item">
+                <i class="bi bi-file-earmark-text nav-icon"></i><span>Contrats</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/postes" class="nav-item">
+                <i class="bi bi-briefcase nav-icon"></i><span>Postes</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/justifications" class="nav-item">
+                <i class="bi bi-file-earmark-text-fill nav-icon"></i><span>Justifications</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/rapport" class="nav-item">
+                <i class="bi bi-bar-chart-fill nav-icon"></i><span>Rapports</span>
+            </a>
+
+            <small class="nav-section-title">Général</small>
+            <a routerLinkActive="active" routerLink="/rh/profil" class="nav-item">
+                <i class="bi bi-person-circle nav-icon"></i><span>Mon Profil</span>
+            </a>
+        </div>
+        }
+
+        <!-- EMPLOYÉ -->
+        @if (authService.isEmploye()) {
+        <div class="nav-section">
+            <small class="nav-section-title">Mon Espace</small>
+            <a routerLinkActive="active" routerLink="/employe/dashboard-employe" class="nav-item">
+                <i class="bi bi-house-door nav-icon"></i><span>Dashboard</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/presences" class="nav-item">
+                <i class="bi bi-clock-history nav-icon"></i><span>Ma Présence</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/conges" class="nav-item">
+                <i class="bi bi-hourglass-split nav-icon"></i><span>Mes Congés</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/contrats" class="nav-item">
+                <i class="bi bi-file-earmark-medical nav-icon"></i><span>Mon Contrat</span>
+            </a>
+            <a routerLinkActive="active" routerLink="/justifications" class="nav-item">
+                <i class="bi bi-file-earmark-text-fill nav-icon"></i><span>Justifications</span>
+            </a>
+
+            <small class="nav-section-title">Général</small>
+            <a routerLinkActive="active" routerLink="/employees/profil" class="nav-item">
+                <i class="bi bi-person-circle nav-icon"></i><span>Mon Profil</span>
+            </a>
+        </div>
+        }
+
+    </nav>
+
+    <!-- ── Footer ── -->
+    <div class="sidebar-footer">
+        <div class="footer-user">
+            <div class="footer-avatar">{{ getInitials() }}</div>
+            <div class="footer-info">
+                <p class="footer-name">{{ getUserName() }}</p>
+                <p class="footer-role">{{ getRoleLabel() }}</p>
+            </div>
+        </div>
+        <button class="btn-logout" (click)="onLogout()">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Déconnexion</span>
+        </button>
+    </div>
+
+</div>

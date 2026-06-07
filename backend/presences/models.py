@@ -1,6 +1,7 @@
 from django.db import models
 from employees.models import Employe
 
+
 class Presence(models.Model):
 
     class Statut(models.TextChoices):
@@ -8,15 +9,19 @@ class Presence(models.Model):
         ABSENT  = 'ABSENT',  'Absent'
         RETARD  = 'RETARD',  'En retard'
 
-    employe  = models.ForeignKey(Employe, on_delete=models.CASCADE, related_name='presences')
+    employe = models.ForeignKey(
+        Employe,
+        on_delete=models.CASCADE,
+        related_name='presences'
+    )
     
-  
-    date   = models.DateField(auto_now_add=True)
-    
+    date = models.DateField(auto_now_add=True)
     heure_arrivee = models.TimeField(null=True, blank=True)
     heure_depart  = models.TimeField(null=True, blank=True)
-    statut   = models.CharField(max_length=10, choices=Statut.choices)
+    statut = models.CharField(max_length=10, choices=Statut.choices)
     
+    # 👇 SUPPRIMER CE CHAMP DU MODÈLE
+    # justifie = models.BooleanField(default=False)  # ❌ RETIRÉ
 
     def calculerHeures(self):
         if self.heure_arrivee and self.heure_depart:
@@ -33,5 +38,3 @@ class Presence(models.Model):
         verbose_name    = "Présence"
         unique_together = ('employe', 'date')
         ordering        = ['-date']
-
-

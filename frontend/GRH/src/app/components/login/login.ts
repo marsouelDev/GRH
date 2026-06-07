@@ -37,20 +37,10 @@ export class Login {
     this.isLoading = true;
     this.errorMessage = null;
 
-    // Utilisation de la méthode centralisée du service
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
-        
         this.isLoading = false;
-
-        if (this.authService.isAdmin()) {
-          this.router.navigate(['/page']);
-        } else if (this.authService.isRH()) {
-          // Correction ici : auth -> authService
-          this.router.navigate(['/dashboard-rh']);
-        } else {
-          this.router.navigate(['/page']);
-        }
+        this.authService.redirectByRole(); 
       },
       error: (err) => {
         this.isLoading = false;

@@ -1,0 +1,331 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- ===== NOTIFICATIONS ===== -->
+<div class="notification-wrapper" *ngIf="messageNotification || messageErreur">
+    <div class="notif notif--success" *ngIf="messageNotification">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ messageNotification }}</span>
+    </div>
+    <div class="notif notif--error" *ngIf="messageErreur">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ messageErreur }}</span>
+    </div>
+</div>
+
+<!-- ===== VUE : LISTE ===== -->
+<div class="page-wrapper" *ngIf="modeAffichage === 'liste'">
+    <div class="page-header">
+        <div class="page-header__left">
+            <div class="page-header__icon"><i class="bi bi-people-fill"></i></div>
+            <div>
+                <h1 class="page-header__title">Administrateurs</h1>
+                <p class="page-header__subtitle">{{ nbTotal }} administrateur(s)</p>
+            </div>
+        </div>
+        <div class="header-actions">
+          
+            <button class="btn btn--primary" routerLink="/administrateurs/create">
+                <i class="bi bi-person-plus-fill"></i> Nouvel administrateur
+            </button>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <div class="search-bar__input-wrap">
+            <i class="bi bi-search search-bar__icon"></i>
+            <input type="text" class="search-bar__input" placeholder="Rechercher par nom, prénom ou email…"
+                [(ngModel)]="recherche" />
+            <button class="search-bar__clear" *ngIf="recherche" (click)="recherche = ''">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <p class="search-bar__result" *ngIf="recherche">
+            <i class="bi bi-funnel-fill"></i> {{ employesFiltres.length }} résultat(s)
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Administrateur</th>
+                        <th>Contact</th>
+                        <th>Date de naissance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let emp of employesFiltres; let i = index">
+                        <td class="td--index">{{ i + 1 }}</td>
+                        <td>
+                            <div class="employe-cell">
+                                <div class="avatar">
+                                    {{ emp.prenom.charAt(0).toUpperCase() }}{{ emp.nom.charAt(0).toUpperCase() }}
+                                </div>
+                                <div>
+                                    <div class="employe-name">{{ emp.prenom }} {{ emp.nom }}</div>
+                                    <div class="employe-email">{{ emp.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="td--phone">
+                                <i class="bi bi-telephone-fill"></i> {{ emp.telephone }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="td--date">
+                                <i class="bi bi-calendar3"></i> {{ emp.date_naissance }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <button class="action-btn action-btn--view" (click)="voirDetails(emp)" title="Voir">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                                <button class="action-btn action-btn--edit" (click)="selectionnerPourModification(emp)"
+                                    title="Modifier">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="employesFiltres.length === 0">
+                        <td colspan="5" class="empty-state">
+                            <i class="bi bi-search"></i>
+                            <p *ngIf="recherche">Aucun résultat pour votre recherche</p>
+                            <p *ngIf="!recherche">Aucun administrateur enregistré</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ===== VUE : CRÉATION ===== -->
+<div class="page-wrapper" *ngIf="modeAffichage === 'creation'">
+    <div class="page-header">
+        <div class="page-header__left">
+            <button class="btn-back" (click)="retournerALaListe()"><i class="bi bi-arrow-left"></i></button>
+            <div class="page-header__icon page-header__icon--green"><i class="bi bi-person-plus-fill"></i></div>
+            <div>
+                <h1 class="page-header__title">Nouvel administrateur</h1>
+                <p class="page-header__subtitle">Remplissez les informations ci-dessous</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card form-card">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-person-fill"></i> Prénom</label>
+                <input type="text" class="form-input" placeholder="ex : Jean" [(ngModel)]="nouveauEmploye.prenom" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-person-fill"></i> Nom</label>
+                <input type="text" class="form-input" placeholder="ex : Dupont" [(ngModel)]="nouveauEmploye.nom" />
+            </div>
+            <div class="form-group form-group--full">
+                <label class="form-label"><i class="bi bi-envelope-fill"></i> Email</label>
+                <input type="email" class="form-input" placeholder="ex : jean@entreprise.com"
+                    [(ngModel)]="nouveauEmploye.email" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-telephone-fill"></i> Téléphone</label>
+                <input type="text" class="form-input" [(ngModel)]="nouveauEmploye.telephone" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-calendar3"></i> Date de naissance</label>
+                <input type="date" class="form-input" [(ngModel)]="nouveauEmploye.date_naissance" />
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn--ghost" (click)="retournerALaListe()"><i class="bi bi-x-lg"></i> Annuler</button>
+            <button class="btn btn--primary" (click)="creerCompte()"><i class="bi bi-floppy-fill"></i> Créer</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== VUE : MODIFICATION ===== -->
+<div class="page-wrapper" *ngIf="modeAffichage === 'modification' && employeSelectionne">
+    <div class="page-header">
+        <div class="page-header__left">
+            <button class="btn-back" (click)="retournerALaListe()"><i class="bi bi-arrow-left"></i></button>
+            <div class="page-header__icon page-header__icon--amber"><i class="bi bi-pencil-fill"></i></div>
+            <div>
+                <h1 class="page-header__title">Modifier</h1>
+                <p class="page-header__subtitle">{{ employeSelectionne.prenom }} {{ employeSelectionne.nom }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card form-card">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-person-fill"></i> Prénom</label>
+                <input type="text" class="form-input" [(ngModel)]="employeSelectionne.prenom" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-person-fill"></i> Nom</label>
+                <input type="text" class="form-input" [(ngModel)]="employeSelectionne.nom" />
+            </div>
+            <div class="form-group form-group--full">
+                <label class="form-label"><i class="bi bi-envelope-fill"></i> Email</label>
+                <input type="email" class="form-input" [(ngModel)]="employeSelectionne.email" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-telephone-fill"></i> Téléphone</label>
+                <input type="text" class="form-input" [(ngModel)]="employeSelectionne.telephone" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-calendar3"></i> Date de naissance</label>
+                <input type="date" class="form-input" [(ngModel)]="employeSelectionne.date_naissance" />
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn--ghost" (click)="retournerALaListe()"><i class="bi bi-x-lg"></i> Annuler</button>
+            <button class="btn btn--amber" (click)="enregistrerModification()"><i class="bi bi-floppy-fill"></i>
+                Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== VUE : DÉTAILS ===== -->
+<div class="page-wrapper" *ngIf="modeAffichage === 'details' && employeSelectionne">
+    <div class="page-header">
+        <div class="page-header__left">
+            <button class="btn-back" (click)="retournerALaListe()"><i class="bi bi-arrow-left"></i></button>
+            <div class="page-header__icon page-header__icon--blue"><i class="bi bi-person-badge-fill"></i></div>
+            <div>
+                <h1 class="page-header__title">Fiche administrateur</h1>
+                <p class="page-header__subtitle">Informations complètes</p>
+            </div>
+        </div>
+        <button class="btn btn--amber" (click)="selectionnerPourModification(employeSelectionne)">
+            <i class="bi bi-pencil-fill"></i> Modifier
+        </button>
+    </div>
+
+    <div class="details-layout">
+        <div class="card profile-card">
+            <div class="profile-avatar">
+                {{ employeSelectionne.prenom.charAt(0).toUpperCase() }}{{ employeSelectionne.nom.charAt(0).toUpperCase()
+                }}
+            </div>
+            <h2 class="profile-name">{{ employeSelectionne.prenom }} {{ employeSelectionne.nom }}</h2>
+            <p class="profile-email">{{ employeSelectionne.email }}</p>
+        </div>
+
+        <div class="card details-card">
+            <h3 class="section-title"><i class="bi bi-info-circle-fill"></i> Informations personnelles</h3>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label"><i class="bi bi-person-fill"></i> Prénom</span>
+                    <span class="detail-value">{{ employeSelectionne.prenom }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label"><i class="bi bi-person-fill"></i> Nom</span>
+                    <span class="detail-value">{{ employeSelectionne.nom }}</span>
+                </div>
+                <div class="detail-item detail-item--full">
+                    <span class="detail-label"><i class="bi bi-envelope-fill"></i> Email</span>
+                    <span class="detail-value">{{ employeSelectionne.email }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label"><i class="bi bi-telephone-fill"></i> Téléphone</span>
+                    <span class="detail-value">{{ employeSelectionne.telephone }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label"><i class="bi bi-calendar3"></i> Date de naissance</span>
+                    <span class="detail-value">{{ employeSelectionne.date_naissance }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== VUE : PROFIL ===== -->
+<div class="page-wrapper" *ngIf="modeAffichage === 'profil' && monProfil">
+    <div class="page-header">
+        <div class="page-header__left">
+            <button class="btn-back" (click)="retournerALaListe()"><i class="bi bi-arrow-left"></i></button>
+            <div class="page-header__icon page-header__icon--purple"><i class="bi bi-person-circle"></i></div>
+            <div>
+                <h1 class="page-header__title">Mon profil</h1>
+                <p class="page-header__subtitle">Gérez vos informations personnelles</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="profil-layout">
+        <div class="profil-sidebar">
+            <div class="card profil-avatar-card">
+                <div class="profil-avatar-circle">
+                    {{ monProfil.prenom.charAt(0).toUpperCase() }}{{ monProfil.nom.charAt(0).toUpperCase() }}
+                </div>
+                <h2 class="profil-nom">{{ monProfil.prenom }} {{ monProfil.nom }}</h2>
+                <p class="profil-email-display">{{ monProfil.email }}</p>
+            </div>
+
+            <div class="card profil-password-card">
+                <h3 class="section-title"><i class="bi bi-shield-lock-fill"></i> Sécurité</h3>
+                <div class="form-group">
+                    <label class="form-label"><i class="bi bi-lock-fill"></i> Nouveau mot de passe</label>
+                    <input [type]="voirNouveauMdp ? 'text' : 'password'" class="form-input" placeholder="••••••••"
+                        [(ngModel)]="nouveauMotDePasse" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><i class="bi bi-lock-fill"></i> Confirmer</label>
+                    <input [type]="voirConfirmMdp ? 'text' : 'password'" class="form-input" placeholder="••••••••"
+                        [(ngModel)]="confirmMotDePasse" />
+                    <p class="input-error-msg"
+                        *ngIf="nouveauMotDePasse && confirmMotDePasse && nouveauMotDePasse !== confirmMotDePasse">
+                        <i class="bi bi-exclamation-circle-fill"></i> Les mots de passe ne correspondent pas
+                    </p>
+                </div>
+                <button class="btn btn--primary btn--full" (click)="changerMotDePasse()">
+                    <i class="bi bi-shield-check-fill"></i> Mettre à jour
+                </button>
+            </div>
+        </div>
+
+        <div class="profil-main">
+            <div class="card form-card">
+                <div class="form-card__header">
+                    <h3 class="section-title"><i class="bi bi-person-lines-fill"></i> Informations</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label"><i class="bi bi-person-fill"></i> Prénom</label>
+                        <input type="text" class="form-input" [(ngModel)]="monProfil.prenom" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="bi bi-person-fill"></i> Nom</label>
+                        <input type="text" class="form-input" [(ngModel)]="monProfil.nom" />
+                    </div>
+                    <div class="form-group form-group--full">
+                        <label class="form-label"><i class="bi bi-envelope-fill"></i> Email</label>
+                        <input type="email" class="form-input" [(ngModel)]="monProfil.email" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="bi bi-telephone-fill"></i> Téléphone</label>
+                        <input type="text" class="form-input" [(ngModel)]="monProfil.telephone" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="bi bi-calendar3"></i> Date de naissance</label>
+                        <input type="date" class="form-input" [(ngModel)]="monProfil.date_naissance" />
+                    </div>
+                </div>
+                <div class="form-actions form-actions--profil">
+                    <button class="btn btn--ghost" (click)="annulerModifProfil()"><i class="bi bi-x-lg"></i>
+                        Annuler</button>
+                    <button class="btn btn--purple" (click)="sauvegarderProfil()"><i class="bi bi-floppy-fill"></i>
+                        Sauvegarder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

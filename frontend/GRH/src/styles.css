@@ -1,2 +1,164 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 @import 'bootstrap-icons/font/bootstrap-icons.css';
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  VARIABLES GLOBALES & THÈMES                                */
+/* ═══════════════════════════════════════════════════════════ */
+:root {
+  --sidebar-w: 240px;
+  --navbar-h: 72px;
+
+  /* Couleurs Mode Clair (Défaut) */
+  --bg-page: #f8fafc;
+  --bg-surface: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+
+  /* Sidebar */
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #f1f5f9;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+
+  /* Navbar */
+  --navbar-bg: #ffffff;
+  --navbar-text: #0f172a;
+  --navbar-border: #e2e8f0;
+}
+
+.dark-mode {
+  color-scheme: dark;
+
+  /* Couleurs Mode Sombre */
+  --bg-page: #0f172a;
+  --bg-surface: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+
+  /* Sidebar */
+  --sidebar-bg: #020617;
+  --sidebar-text: #f1f5f9;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+
+  /* Navbar */
+  --navbar-bg: #1e293b;
+  --navbar-text: #f1f5f9;
+  --navbar-border: #334155;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  RESET & BASES HOOKS                                        */
+/* ═══════════════════════════════════════════════════════════ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  LAYOUT STRUCTURE — ANGULAR FLEX COMPATIBLE                 */
+/* ═══════════════════════════════════════════════════════════ */
+
+/* Conteneur principal */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  transition: background-color 0.3s ease;
+}
+
+/* Sidebar (Fixe à gauche) */
+.app-sidebar {
+  width: var(--sidebar-w);
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  transition:
+    transform 0.3s ease,
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+/* Zone principale (Contenu + Navbar) */
+.app-main {
+  flex: 1;
+  margin-left: var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  transition: background-color 0.3s ease;
+}
+
+/* Navbar (Sticky en haut) */
+.app-navbar {
+  position: sticky;
+  top: 0;
+  height: var(--navbar-h);
+  width: 100%;
+  z-index: 900;
+  background-color: var(--navbar-bg);
+  border-bottom: 1px solid var(--navbar-border);
+  color: var(--navbar-text);
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Zone de contenu scrollable */
+.app-content {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  overflow-y: auto;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  RESPONSIVE DESIGN (MOBILES & TABLETTES)                   */
+/* ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .app-sidebar {
+    transform: translateX(-100%);
+  }
+
+  .app-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .app-content {
+    padding: 1rem;
+  }
+}

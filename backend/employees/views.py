@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema
 from .models import Employe
-from .serializers import EmployeSerializer
+from .serializers import ChangeEmployeSerializer, EmployeSerializer
 from .permissions import IsRhOrAdmin
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -197,17 +197,40 @@ class EmployeActiverView(APIView):
     permission_classes = [IsRhOrAdmin]
 
     @extend_schema(summary="Réactiver un poste archivé (RH/Admin)", responses=EmployeSerializer)
-    def put(self, request, pk):
+    def put(self, request, id):
         try:
-            emp = Employe.objects.get(pk=pk)
+            emp = Employe.objects.get(id=id)
         except Employe.DoesNotExist:
-            return Response({"detail": "Poste introuvable."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "Employee introuvable."}, status=status.HTTP_404_NOT_FOUND)
         
-        emp.est_actif = True
+        emp.is_active = True
         emp.save()
-        return Response({"detail": "Poste réactivé avec succès.","RH": EmployeSerializer(emp).data}, status=status.HTTP_200_OK)
+        return Response({"detail": "Employe réactivé avec succès.","Employe": EmployeSerializer(emp).data}, status=status.HTTP_200_OK)
         
+
+class EmployeChangeAPIView(APIView):
+    permission_classes = [IsAuthenticated] 
+
+    def get_object(self, id):
+        try:
+            return Employe.objects.get(id=id)
+        except Employe.DoesNotExist:
+            return None
     
+    @extend_schema(summary="Modifier un employé", request=ChangeEmployeSerializer, responses=ChangeEmployeSerializer)
+    def put(self, request, id):
+        employe = self.get_object(id)
+        if not employe:
+            return Response({"detail": "Employé introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if request.user.id != employe.id and request.user.role not in ['ADMIN', 'RH']:
+            return Response({"detail": "Accès interdit."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ChangeEmployeSerializer(employe, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DashboardStatsAPIView(APIView):
     permission_classes = [IsAuthenticated]

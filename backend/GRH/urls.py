@@ -4,6 +4,9 @@ from drf_spectacular.views import (SpectacularAPIView, SpectacularSwaggerView, S
 from drf_spectacular.utils import extend_schema_view, extend_schema 
 from administrateur.serializers import MyTokenObtainPairView
 from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
+from django.conf import settings
+from django.conf.urls.static import static
+from django.views.static import serve
 
 # Décoration des vues natives de SimpleJWT pour Swagger
 TokenRefreshViewDecorated = extend_schema_view(post=extend_schema(summary="Rafraîchir le token d'accès", tags=["Authentification"]))(TokenRefreshView)
@@ -30,7 +33,10 @@ urlpatterns = [
     path('', include('poste.urls')),
     path('', include('notification.urls')),
     path('', include('rapport.urls')),
-]
+] 
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    
 
 
 

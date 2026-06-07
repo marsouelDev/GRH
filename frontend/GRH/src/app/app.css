@@ -1,3 +1,6 @@
+/* ═══════════════════════════════════════════════════════════ */
+/*  RESET & CONFIGURATION DE BASE                              */
+/* ═══════════════════════════════════════════════════════════ */
 *,
 *::before,
 *::after {
@@ -7,29 +10,51 @@
 }
 
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background: var(--color-background-tertiary, #f1f5f9);
+  font-family:
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background-color: var(--color-background-tertiary, #f1f5f9);
   color: var(--color-text-primary, #1e293b);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Layout principal : sidebar à gauche, contenu à droite */
+/* ═══════════════════════════════════════════════════════════ */
+/*  LAYOUT PRINCIPAL (FLEXBOX ANTI-SCROLL GLOBAL)              */
+/* ═══════════════════════════════════════════════════════════ */
+
+/* Conteneur parent : Bloque le scroll global du navigateur */
 .app-layout {
   display: flex;
+  width: 100vw;
   height: 100vh;
   overflow: hidden;
 }
 
-/* Colonne droite : navbar + contenu */
+/* Colonne droite : Aligne la Navbar et le Contenu verticalement */
 .app-main {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0; /* Empêche les éléments enfants de casser le layout flex */
   overflow: hidden;
 }
 
-/* Zone de contenu scrollable */
+/* Zone de contenu : Seule cette partie peut scroller */
 .app-content {
   flex: 1;
   overflow-y: auto;
   padding: 28px 32px;
+  background-color: var(--color-background-page, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  ADAPTATION MOBILE (RESPONSIVE)                            */
+/* ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .app-content {
+    padding: 16px; /* Réduit l'espace sur petit écran */
+  }
 }

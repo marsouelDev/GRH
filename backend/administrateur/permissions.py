@@ -1,4 +1,4 @@
-# administrateur/permissions.py
+
 from rest_framework import permissions
 from Users.models import RoleEnum
 

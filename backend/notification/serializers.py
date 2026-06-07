@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import  Notification
+from .models import Notification
 
 class NotificationSerializer(serializers.ModelSerializer):
     type_label = serializers.SerializerMethodField()
@@ -8,9 +8,11 @@ class NotificationSerializer(serializers.ModelSerializer):
         return obj.getTypeLabel()
 
     class Meta:
-        model  = Notification
-        fields = ['id', 'destinataire','type_notif', 'type_label','titre', 'message', 'lien','lu', 'date_envoi',]
+        model = Notification
+        fields = [
+            'id', 'type_notif', 'type_label', 
+            'titre', 'message', 'lien', 'lu', 'date_envoi'
+        ]
         extra_kwargs = {
-            'destinataire': {'write_only': True},
-            'date_envoi':   {'read_only': True},
+            'date_envoi': {'read_only': True},
         }

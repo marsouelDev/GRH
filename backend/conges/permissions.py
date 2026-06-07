@@ -1,20 +1,24 @@
 from rest_framework import permissions
 
-def get_user_role(request):
-    """Fonction utilitaire pour extraire le rôle au format texte brut."""
+def get_user_role(request) -> str:
     if not request.user or not request.user.is_authenticated:
-        return None
-    user_role = getattr(request.user, 'role', None)
-    return user_role.value if hasattr(user_role, 'value') else str(user_role)
+        return ''
+    
+    if hasattr(request, 'auth') and request.auth and 'role' in request.auth:
+        return str(request.auth['role'])
+
+    role = getattr(request.user, 'role', None)
+    if role is None:
+        return ''
+    return role.value if hasattr(role, 'value') else str(role)
 
 
 class IsAdminUserRole(permissions.BasePermission):
-  
     def has_permission(self, request, view):
         role = get_user_role(request)
-        if role == 'ADMIN' and request.method in permissions.SAFE_METHODS: 
-            return True
-        return False
+        if role != 'ADMIN':
+            return False
+        return request.method in permissions.SAFE_METHODS
 
 
 class IsRhUserRole(permissions.BasePermission):
@@ -24,8 +28,7 @@ class IsRhUserRole(permissions.BasePermission):
 
 class IsEmployeUserRole(permissions.BasePermission):
     def has_permission(self, request, view):
-        role = get_user_role(request)
-        return role == 'EMPLOYE'
+        return get_user_role(request) == 'EMPLOYE'
 
     def has_object_permission(self, request, view, obj):
         return obj.employe == request.user

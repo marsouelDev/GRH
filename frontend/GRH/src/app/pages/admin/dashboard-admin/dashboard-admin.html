@@ -1,0 +1,86 @@
+<div class="dash">
+    <!-- ══ PAGE HEADER ════════════════════════════════════════════ -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-h1">Dashboard Administrateur</h1>
+            <p class="page-sub">Vue d'ensemble de la plateforme</p>
+        </div>
+    </div>
+
+    <!-- ══ STATS CARDS ════════════════════════════════════════════ -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(79,142,247,0.12);color:#4f8ef7">🧑‍💼</div>
+            <div class="stat-body">
+                <span class="stat-value">{{ stats.employes }}</span>
+                <span class="stat-label">Employés</span>
+            </div>
+            <div class="stat-trend up">+2 ce mois</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(52,199,123,0.12);color:#34c77b">👥</div>
+            <div class="stat-body">
+                <span class="stat-value">{{ stats.rh }}</span>
+                <span class="stat-label">Équipe RH</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(245,166,35,0.12);color:#f5a623">📄</div>
+            <div class="stat-body">
+                <span class="stat-value">{{ stats.contrats }}</span>
+                <span class="stat-label">Contrats actifs</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(240,92,92,0.12);color:#f05c5c">📅</div>
+            <div class="stat-body">
+                <span class="stat-value">{{ stats.conges }}</span>
+                <span class="stat-label">Congés en attente</span>
+            </div>
+            @if (stats.conges > 0) {
+            <div class="stat-trend warn">À traiter</div>
+            }
+        </div>
+    </div>
+
+    <!-- ══ ACTIONS RAPIDES ════════════════════════════════════════ -->
+    <div class="section">
+        <h3 class="section-title">Actions rapides</h3>
+        <div class="actions-grid">
+            <a routerLink="/admin/employes/create" class="action-card">
+                <div class="action-icon">➕</div>
+                <div>
+                    <p class="action-title">Ajouter un employé</p>
+                    <p class="action-sub">Créer un nouveau compte employé</p>
+                </div>
+            </a>
+
+            <a routerLink="/admin/rh/create" class="action-card">
+                <div class="action-icon">➕</div>
+                <div>
+                    <p class="action-title">Ajouter un RH</p>
+                    <p class="action-sub">Créer un compte responsable RH</p>
+                </div>
+            </a>
+
+            <a routerLink="/admin/contrats" class="action-card">
+                <div class="action-icon">📄</div>
+                <div>
+                    <p class="action-title">Gérer les contrats</p>
+                    <p class="action-sub">Voir et modifier les contrats</p>
+                </div>
+            </a>
+
+            <a routerLink="/admin/conges" class="action-card">
+                <div class="action-icon">📅</div>
+                <div>
+                    <p class="action-title">Valider les congés</p>
+                    <p class="action-sub">Approuver ou refuser les demandes</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>

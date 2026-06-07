@@ -1,0 +1,435 @@
+<!-- =====================================================================
+     COMPOSANT POSTES — TEMPLATE PRINCIPAL
+     ===================================================================== -->
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!--  NOTIFICATIONS                                              -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="notif-stack" role="status" aria-live="polite" aria-atomic="true">
+    <div class="notif notif--success" *ngIf="successMessage" role="alert">
+        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+        <span>{{ successMessage }}</span>
+    </div>
+    <div class="notif notif--error" *ngIf="errorMessage" role="alert">
+        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+        <span>{{ errorMessage }}</span>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!--  MODAL DE CONFIRMATION                                      -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay--global modal-overlay--confirmation" *ngIf="afficherModalConfirmation"
+    (click)="fermerModalConfirmation()" role="dialog" aria-modal="true" aria-labelledby="modal-poste-confirm-title">
+    <div class="modal--global modal--confirmation" (click)="$event.stopPropagation()">
+        <div class="modal__header">
+            <div class="modal__icon" [ngClass]="{
+                'modal__icon--success': modalConfirmationConfig?.type === 'success',
+                'modal__icon--warning': modalConfirmationConfig?.type === 'warning',
+                'modal__icon--danger': modalConfirmationConfig?.type === 'danger'
+            }" aria-hidden="true">
+                <i class="bi" [ngClass]="{
+                    'bi-check-circle-fill': modalConfirmationConfig?.type === 'success',
+                    'bi-exclamation-triangle-fill': modalConfirmationConfig?.type === 'warning',
+                    'bi-x-circle-fill': modalConfirmationConfig?.type === 'danger'
+                }"></i>
+            </div>
+            <div class="modal__titles">
+                <h3 id="modal-poste-confirm-title" class="modal__title">
+                    {{ modalConfirmationConfig?.titre }}
+                </h3>
+                <p class="modal__sub">Cette action nécessite votre confirmation</p>
+            </div>
+            <button class="modal__close" (click)="fermerModalConfirmation()" aria-label="Fermer">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="modal__body">
+            <p class="confirmation-message">{{ modalConfirmationConfig?.message }}</p>
+        </div>
+        <div class="modal__footer">
+            <button class="btn btn--ghost" (click)="fermerModalConfirmation()">
+                <i class="bi bi-x-lg" aria-hidden="true"></i> Annuler
+            </button>
+            <button class="btn" [ngClass]="{
+                'btn--success': modalConfirmationConfig?.type === 'success',
+                'btn--amber': modalConfirmationConfig?.type === 'warning',
+                'btn--danger': modalConfirmationConfig?.type === 'danger'
+            }" (click)="confirmerAction()">
+                <i class="bi" [ngClass]="{
+                    'bi-check-circle-fill': modalConfirmationConfig?.type === 'success',
+                    'bi-exclamation-triangle-fill': modalConfirmationConfig?.type === 'warning',
+                    'bi-x-circle-fill': modalConfirmationConfig?.type === 'danger'
+                }" aria-hidden="true"></i>
+                Confirmer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!--  VUE : LISTE                                                -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<section class="page-wrapper" *ngIf="modeAffichage === 'liste'" aria-label="Liste des postes">
+
+    <header class="page-header">
+        <div class="page-header__left">
+            <div class="page-header__icon" aria-hidden="true">
+                <i class="bi bi-briefcase-fill"></i>
+            </div>
+            <div>
+                <h1 class="page-header__title">Postes</h1>
+                <p class="page-header__subtitle">
+                    {{ voirArchives ? 'Archives' : 'Postes actifs' }} —
+                    <strong>{{ postes.length }}</strong> poste(s)
+                </p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn--ghost" (click)="toggleArchives()" [attr.aria-pressed]="voirArchives">
+                <i class="bi" [class.bi-archive-fill]="!voirArchives" [class.bi-briefcase-fill]="voirArchives"
+                    aria-hidden="true"></i>
+                {{ voirArchives ? 'Voir les actifs' : 'Voir les archives' }}
+            </button>
+            <button class="btn btn--primary" routerLink="/postes/create" *ngIf="isRH && !isAdmin">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i> Nouveau poste
+            </button>
+        </div>
+    </header>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!--  ZONE DE FILTRAGE (NOUVEAU)                                 -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <div class="toolbar">
+        <!-- Ligne 1 : Recherche + bouton reset -->
+        <div class="toolbar__search-row">
+            <div class="search-wrap">
+                <i class="bi bi-search search-wrap__icon" aria-hidden="true"></i>
+                <input type="text" class="search-wrap__input" placeholder="Rechercher un poste…" [(ngModel)]="recherche"
+                    (ngModelChange)="appliquerFiltres()" aria-label="Rechercher un poste" />
+                <button class="search-wrap__clear" *ngIf="recherche" (click)="recherche=''; appliquerFiltres()"
+                    aria-label="Effacer la recherche">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </div>
+            <button class="btn btn--ghost btn--sm" *ngIf="recherche || filtreNiveau || filtreStatut"
+                (click)="reinitialiserFiltres()" aria-label="Réinitialiser les filtres">
+                <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Réinitialiser
+            </button>
+        </div>
+
+        <!-- Ligne 2 : Chips de filtres par niveau -->
+        <div class="filter-chips">
+            <span class="filter-chips__label">
+                <i class="bi bi-funnel-fill" aria-hidden="true"></i> Niveau :
+            </span>
+            <button class="chip" [class.chip--active]="filtreNiveau === ''" (click)="setFiltreNiveau('')"
+                [attr.aria-pressed]="filtreNiveau === ''">
+                <i class="bi bi-grid-fill" aria-hidden="true"></i> Tous
+                <span class="chip__count">{{ tousLesPostes.length }}</span>
+            </button>
+            <button class="chip chip--junior" [class.chip--active]="filtreNiveau === 'JUNIOR'"
+                (click)="setFiltreNiveau('JUNIOR')" [attr.aria-pressed]="filtreNiveau === 'JUNIOR'">
+                <i class="bi bi-person-fill" aria-hidden="true"></i> Junior
+                <span class="chip__count">{{ nbParNiveau['JUNIOR'] || 0 }}</span>
+            </button>
+            <button class="chip chip--intermediaire" [class.chip--active]="filtreNiveau === 'INTERMEDIAIRE'"
+                (click)="setFiltreNiveau('INTERMEDIAIRE')" [attr.aria-pressed]="filtreNiveau === 'INTERMEDIAIRE'">
+                <i class="bi bi-person-check-fill" aria-hidden="true"></i> Intermédiaire
+                <span class="chip__count">{{ nbParNiveau['INTERMEDIAIRE'] || 0 }}</span>
+            </button>
+            <button class="chip chip--senior" [class.chip--active]="filtreNiveau === 'SENIOR'"
+                (click)="setFiltreNiveau('SENIOR')" [attr.aria-pressed]="filtreNiveau === 'SENIOR'">
+                <i class="bi bi-award-fill" aria-hidden="true"></i> Senior
+                <span class="chip__count">{{ nbParNiveau['SENIOR'] || 0 }}</span>
+            </button>
+            <button class="chip chip--manager" [class.chip--active]="filtreNiveau === 'MANAGER'"
+                (click)="setFiltreNiveau('MANAGER')" [attr.aria-pressed]="filtreNiveau === 'MANAGER'">
+                <i class="bi bi-people-fill" aria-hidden="true"></i> Manager
+                <span class="chip__count">{{ nbParNiveau['MANAGER'] || 0 }}</span>
+            </button>
+            <button class="chip chip--directeur" [class.chip--active]="filtreNiveau === 'DIRECTEUR'"
+                (click)="setFiltreNiveau('DIRECTEUR')" [attr.aria-pressed]="filtreNiveau === 'DIRECTEUR'">
+                <i class="bi bi-star-fill" aria-hidden="true"></i> Directeur
+                <span class="chip__count">{{ nbParNiveau['DIRECTEUR'] || 0 }}</span>
+            </button>
+        </div>
+
+        <!-- Ligne 3 : Chips de filtres par statut -->
+        <div class="filter-chips">
+            <span class="filter-chips__label">
+                <i class="bi bi-toggles" aria-hidden="true"></i> Statut :
+            </span>
+            <button class="chip" [class.chip--active]="filtreStatut === ''" (click)="setFiltreStatut('')"
+                [attr.aria-pressed]="filtreStatut === ''">
+                <i class="bi bi-grid-fill" aria-hidden="true"></i> Tous
+            </button>
+            <button class="chip chip--actif" [class.chip--active]="filtreStatut === 'actif'"
+                (click)="setFiltreStatut('actif')" [attr.aria-pressed]="filtreStatut === 'actif'">
+                <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Actifs
+                <span class="chip__count">{{ nbPostesActifs }}</span>
+            </button>
+            <button class="chip chip--archive" [class.chip--active]="filtreStatut === 'archive'"
+                (click)="setFiltreStatut('archive')" [attr.aria-pressed]="filtreStatut === 'archive'">
+                <i class="bi bi-archive-fill" aria-hidden="true"></i> Archivés
+                <span class="chip__count">{{ nbPostesArchives }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-row" role="group" aria-label="Statistiques">
+        <div class="stat-card stat-card--total">
+            <div class="stat-card__icon" aria-hidden="true"><i class="bi bi-layers-fill"></i></div>
+            <div class="stat-card__body">
+                <span class="stat-card__value">{{ postes.length }}</span>
+                <span class="stat-card__label">Affichés</span>
+            </div>
+            <div class="stat-card__bar" aria-hidden="true"></div>
+        </div>
+        <div class="stat-card stat-card--approuve">
+            <div class="stat-card__icon" aria-hidden="true"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="stat-card__body">
+                <span class="stat-card__value">{{ nbPostesActifs }}</span>
+                <span class="stat-card__label">Actifs</span>
+            </div>
+            <div class="stat-card__bar" aria-hidden="true"></div>
+        </div>
+        <div class="stat-card stat-card--refuse">
+            <div class="stat-card__icon" aria-hidden="true"><i class="bi bi-archive-fill"></i></div>
+            <div class="stat-card__body">
+                <span class="stat-card__value">{{ nbPostesArchives }}</span>
+                <span class="stat-card__label">Archivés</span>
+            </div>
+            <div class="stat-card__bar" aria-hidden="true"></div>
+        </div>
+        <div class="stat-card stat-card--attente">
+            <div class="stat-card__icon" aria-hidden="true"><i class="bi bi-star-fill"></i></div>
+            <div class="stat-card__body">
+                <span class="stat-card__value">{{ nbDirecteurs }}</span>
+                <span class="stat-card__label">Directeurs</span>
+            </div>
+            <div class="stat-card__bar" aria-hidden="true"></div>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="card">
+        <div class="table-wrapper">
+            <table class="table" aria-label="Liste des postes">
+                <thead>
+                    <tr>
+                        <th scope="col">Intitulé</th>
+                        <th scope="col">Niveau</th>
+                        <th scope="col">Salaire</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let poste of postes" [class.row--annule]="!poste.est_actif">
+                        <td>
+                            <div class="poste-cell">
+                                <div class="poste-cell__icon" aria-hidden="true">
+                                    <i class="bi" [class]="getIconForNiveau(poste.niveau_hierarchie)"></i>
+                                </div>
+                                <div>
+                                    <div class="poste-cell__title">{{ poste.intitule }}</div>
+                                    <div class="poste-cell__desc">
+                                        {{ poste.description | slice:0:60 }}{{ isDescriptionLongue(poste.description) ?
+                                        '...' : '' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="niveau-badge" [ngClass]="getBadgeClassForNiveau(poste.niveau_hierarchie)">
+                                <i class="bi" [class]="getIconForNiveau(poste.niveau_hierarchie)"
+                                    aria-hidden="true"></i>
+                                {{ getLabelForNiveau(poste.niveau_hierarchie) }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="salaire-cell">
+                                <span class="salaire-cell__min">{{ poste.salaire_min | currency:'EUR':'symbol':'1.0-0'
+                                    }}</span>
+                                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                                <span class="salaire-cell__max">{{ poste.salaire_max | currency:'EUR':'symbol':'1.0-0'
+                                    }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="statut-badge" [class.statut-badge--approuve]="poste.est_actif"
+                                [class.statut-badge--annule]="!poste.est_actif">
+                                <i class="bi" [class.bi-check-circle-fill]="poste.est_actif"
+                                    [class.bi-archive-fill]="!poste.est_actif" aria-hidden="true"></i>
+                                {{ poste.est_actif ? 'Actif' : 'Archivé' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions" role="group" aria-label="Actions">
+                                <button class="action-btn action-btn--view" [routerLink]="['/postes/edit', poste.id]"
+                                    title="Modifier" aria-label="Modifier le poste">
+                                    <i class="bi bi-pencil-fill" aria-hidden="true"></i>
+                                </button>
+                                <button class="action-btn action-btn--archive" *ngIf="poste.est_actif && isManager"
+                                    (click)="demanderArchivage(poste)" title="Archiver" aria-label="Archiver">
+                                    <i class="bi bi-archive-fill" aria-hidden="true"></i>
+                                </button>
+                                <button class="action-btn action-btn--reactivate" *ngIf="!poste.est_actif && isManager"
+                                    (click)="demanderReactivation(poste)" title="Réactiver" aria-label="Réactiver">
+                                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="postes.length === 0">
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state__inner">
+                                <i class="bi bi-briefcase" aria-hidden="true"></i>
+                                <p>{{ voirArchives ? 'Aucun poste archivé' : 'Aucun poste disponible' }}</p>
+                                <small *ngIf="recherche || filtreNiveau || filtreStatut">
+                                    Essayez de modifier vos filtres
+                                </small>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!--  VUE : CRÉATION / ÉDITION                                   -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<section class="page-wrapper" *ngIf="modeAffichage === 'creation' || modeAffichage === 'edition'"
+    [attr.aria-label]="modeAffichage === 'creation' ? 'Créer un nouveau poste' : 'Modifier le poste'">
+
+    <header class="page-header">
+        <div class="page-header__left">
+            <button class="btn-back" routerLink="/postes" aria-label="Retour">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            </button>
+            <div class="page-header__icon" [class.page-header__icon--green]="modeAffichage === 'creation'"
+                [class.page-header__icon--amber]="modeAffichage === 'edition'" aria-hidden="true">
+                <i class="bi" [class.bi-plus-circle-fill]="modeAffichage === 'creation'"
+                    [class.bi-pencil-fill]="modeAffichage === 'edition'"></i>
+            </div>
+            <div>
+                <h1 class="page-header__title">
+                    {{ modeAffichage === 'creation' ? 'Nouveau poste' : 'Modifier le poste' }}
+                </h1>
+                <p class="page-header__subtitle">
+                    {{ modeAffichage === 'creation' ? 'Remplissez le formulaire ci-dessous' : posteSelectionne.intitule
+                    }}
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <article class="card form-card">
+        <form #posteForm="ngForm" (ngSubmit)="soumettrePoste(posteForm)">
+            <div class="form-section">
+                <h2 class="form-section__title">
+                    <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                    Informations du poste
+                </h2>
+
+                <div class="form-grid">
+                    <!-- Intitulé -->
+                    <div class="form-group form-group--full">
+                        <label class="form-label" for="intitule">
+                            <i class="bi bi-tag-fill" aria-hidden="true"></i> Intitulé du poste *
+                        </label>
+                        <input id="intitule" type="text" class="form-input" placeholder="Ex: Développeur Full Stack"
+                            [(ngModel)]="posteSelectionne.intitule" name="intitule" required #intituleField="ngModel" />
+                        <span class="form-error" *ngIf="intituleField.invalid && intituleField.touched">
+                            L'intitulé est requis
+                        </span>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group form-group--full">
+                        <label class="form-label" for="description">
+                            <i class="bi bi-chat-left-text-fill" aria-hidden="true"></i> Description
+                        </label>
+                        <textarea id="description" class="form-input form-textarea" rows="4"
+                            placeholder="Décrivez les missions et responsabilités…"
+                            [(ngModel)]="posteSelectionne.description" name="description"></textarea>
+                    </div>
+
+                    <!-- Niveau hiérarchique - CORRIGÉ -->
+                    <div class="form-group">
+                        <label class="form-label" for="niveau">
+                            <i class="bi bi-diagram-3-fill" aria-hidden="true"></i> Niveau hiérarchique *
+                        </label>
+                        <select id="niveau" class="form-input form-select"
+                            [ngModel]="posteSelectionne.niveau_hierarchie"
+                            (ngModelChange)="posteSelectionne.niveau_hierarchie = $event" name="niveau_hierarchie"
+                            required #niveauField="ngModel">
+                            <option *ngFor="let n of niveaux" [ngValue]="n.value">
+                                {{ n.label }}
+                            </option>
+                        </select>
+                        <span class="form-error" *ngIf="niveauField.invalid && niveauField.touched">
+                            Le niveau hiérarchique est requis
+                        </span>
+                    </div>
+
+                    <!-- Statut - CORRIGÉ -->
+                    <div class="form-group">
+                        <label class="form-label" for="statut">
+                            <i class="bi bi-toggle-on" aria-hidden="true"></i> Statut
+                        </label>
+                        <select id="statut" class="form-input form-select" [ngModel]="posteSelectionne.est_actif"
+                            (ngModelChange)="posteSelectionne.est_actif = $event" name="est_actif">
+                            <option [ngValue]="true">Actif</option>
+                            <option [ngValue]="false">Archivé</option>
+                        </select>
+                    </div>
+
+                    <!-- Salaire minimum -->
+                    <div class="form-group">
+                        <label class="form-label" for="salaire-min">
+                            <i class="bi bi-cash-stack" aria-hidden="true"></i> Salaire minimum (€) *
+                        </label>
+                        <input id="salaire-min" type="number" class="form-input" placeholder="30000"
+                            [(ngModel)]="posteSelectionne.salaire_min" name="salaire_min" required min="0"
+                            #salaireMinField="ngModel" />
+                        <span class="form-error" *ngIf="salaireMinField.invalid && salaireMinField.touched">
+                            Le salaire minimum est requis
+                        </span>
+                    </div>
+
+                    <!-- Salaire maximum -->
+                    <div class="form-group">
+                        <label class="form-label" for="salaire-max">
+                            <i class="bi bi-cash-coin" aria-hidden="true"></i> Salaire maximum (€) *
+                        </label>
+                        <input id="salaire-max" type="number" class="form-input" placeholder="50000"
+                            [(ngModel)]="posteSelectionne.salaire_max" name="salaire_max" required min="0"
+                            #salaireMaxField="ngModel" />
+                        <span class="form-error" *ngIf="salaireMaxField.invalid && salaireMaxField.touched">
+                            Le salaire maximum est requis
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn--ghost" routerLink="/postes">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i> Annuler
+                </button>
+                <button type="submit" class="btn" [class.btn--primary]="modeAffichage === 'creation'"
+                    [class.btn--amber]="modeAffichage === 'edition'" [disabled]="posteForm.invalid">
+                    <i class="bi" [class.bi-send-fill]="modeAffichage === 'creation'"
+                        [class.bi-floppy-fill]="modeAffichage === 'edition'" aria-hidden="true"></i>
+                    {{ modeAffichage === 'creation' ? 'Créer le poste' : 'Sauvegarder' }}
+                </button>
+            </div>
+        </form>
+    </article>
+</section>

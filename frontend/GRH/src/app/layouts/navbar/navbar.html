@@ -1,0 +1,61 @@
+<!-- navbar.html -->
+<nav class="navbar" [class.dark-mode]="theme.isDarkMode()">
+
+  <div class="nav-left">
+    <!--  Bouton hamburger (visible uniquement sur mobile) -->
+    <button class="icon-btn menu-toggle" (click)="onMenuToggle()" title="Ouvrir le menu" aria-label="Ouvrir le menu">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <div class="page-info" [ngClass]="getRoleClass()">
+      <div class="page-icon">
+        <i class="bi" [ngClass]="{
+          'bi-shield-check': authService.isAdmin(),
+          'bi-people-fill': authService.isRH(),
+          'bi-person-badge': authService.isEmploye()
+        }"></i>
+      </div>
+      <!--  AJOUT de la classe page-info__text pour pouvoir la cacher sur mobile -->
+      <div class="page-info__text">
+        <h2 class="page-title">
+          @if (authService.isAdmin()) { Administration }
+          @else if (authService.isRH()) { Ressources Humaines }
+          @else { Espace Employé }
+        </h2>
+        <p class="page-sub">WorkFlow </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-right">
+    <!-- Thème -->
+    <button (click)="theme.toggleTheme()" class="icon-btn" title="Changer de thème" aria-label="Changer de thème">
+      <i class="bi" [ngClass]="theme.isDarkMode() ? 'bi-sun-fill' : 'bi-moon-stars-fill'"></i>
+    </button>
+
+    <!-- Notifications -->
+    <button class="icon-btn" title="Notifications" routerLink="/notifications" aria-label="Voir les notifications">
+      <i class="bi bi-bell-fill"></i>
+      @if (badgeCount > 0) {
+      <span class="notif-badge">{{ badgeCount > 9 ? '9+' : badgeCount }}</span>
+      }
+    </button>
+
+    <div class="divider"></div>
+
+    <!-- Profil -->
+    <div class="user-pill" [ngClass]="getRoleClass()">
+      <div class="user-avatar">{{ getInitials() }}</div>
+      <div class="user-details">
+        <span class="user-name">{{ getUserFullName() }}</span>
+        <span class="user-role">{{ getRoleLabel() }}</span>
+      </div>
+    </div>
+
+    <!-- Déconnexion -->
+    <button (click)="onLogout()" class="logout-btn-quick" title="Se déconnecter" aria-label="Se déconnecter">
+      <i class="bi bi-box-arrow-right"></i>
+      <span>Déconnexion</span>
+    </button>
+  </div>
+</nav>

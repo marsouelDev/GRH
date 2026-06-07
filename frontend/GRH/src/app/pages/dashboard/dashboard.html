@@ -1,0 +1,12 @@
+<!-- Routage par rôle — TS inchangé -->
+<div *ngIf="role === 'ADMIN'">
+    <app-dashboard-admin></app-dashboard-admin>
+</div>
+
+<div *ngIf="role === 'RH'">
+    <app-dashboard-rh></app-dashboard-rh>
+</div>
+
+<div *ngIf="role === 'EMPLOYE'">
+    <app-dashboard-employe></app-dashboard-employe>
+</div>

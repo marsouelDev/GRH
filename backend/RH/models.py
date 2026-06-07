@@ -1,7 +1,6 @@
 from django.db import models
 from Users.models import Utilisateur, RoleEnum
 
-
 class RH(Utilisateur):
     nom    = models.CharField(max_length=100)
     prenom  = models.CharField(max_length=100)

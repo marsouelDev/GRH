@@ -2,39 +2,42 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
 
+function redirectToLogin(router: Router): boolean {
+  router.navigate(['/login']);
+  return false;
+}
+
 export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isLoggedIn()) {
-    return true;
-  }
-  router.navigate(['/login']);
-  return false;
+  return authService.isLoggedIn() ? true : redirectToLogin(router);
 };
 
 export const adminGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isAdmin()) return true;
-  router.navigate(['/login']);
-  return false;
+  return authService.isAdmin() ? true : redirectToLogin(router);
 };
 
 export const rhOrAdminGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isRH() || authService.isAdmin()) return true;
-  router.navigate(['/login']);
-  return false;
+  return authService.isRH() || authService.isAdmin() ? true : redirectToLogin(router);
 };
+
 export const rhGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isRH()) return true;
-  router.navigate(['/login']);
-  return false;
+  return authService.isRH() ? true : redirectToLogin(router);
+};
+
+export const employeGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  return authService.isEmploye() ? true : redirectToLogin(router);
 };

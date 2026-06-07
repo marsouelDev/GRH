@@ -1,0 +1,78 @@
+<div class="dash">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-h1">Dashboard RH</h1>
+      <p class="page-sub">Gestion des ressources humaines</p>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(79,142,247,0.12);color:#4f8ef7">🧑‍💼</div>
+      <div class="stat-body">
+        <span class="stat-value">{{ stats.employes || 0 }}</span>
+        <span class="stat-label">Employés gérés</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(240,92,92,0.12);color:#f05c5c">📅</div>
+      <div class="stat-body">
+        <span class="stat-value">{{ stats.congesEnAttente || 0 }}</span>
+        <span class="stat-label">Congés en attente</span>
+      </div>
+      <div class="stat-trend warn" *ngIf="stats.congesEnAttente > 0">À traiter</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(245,166,35,0.12);color:#f5a623">📄</div>
+      <div class="stat-body">
+        <span class="stat-value">{{ stats.contrats || 0 }}</span>
+        <span class="stat-label">Contrats actifs</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(52,199,123,0.12);color:#34c77b">⏱</div>
+      <div class="stat-body">
+        <span class="stat-value">{{ stats.presences || 0 }}</span>
+        <span class="stat-label">Présences aujourd'hui</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="section">
+    <h3 class="section-title">Gestion RH</h3>
+    <div class="actions-grid">
+
+      <a routerLink="/employees" class="action-card">
+        <div class="action-icon">👥</div>
+        <div>
+          <p class="action-title">Employés</p>
+          <p class="action-sub">Gérer la liste des employés</p>
+        </div>
+      </a>
+
+      <a routerLink="/conges" class="action-card">
+        <div class="action-icon">📅</div>
+        <div>
+          <p class="action-title">Congés</p>
+          <p class="action-sub">Traiter les demandes en cours</p>
+        </div>
+      </a>
+
+      <a routerLink="/contrats" class="action-card">
+        <div class="action-icon">📄</div>
+        <div>
+          <p class="action-title">Contrats</p>
+          <p class="action-sub">Suivre et gérer les contrats</p>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+</div>

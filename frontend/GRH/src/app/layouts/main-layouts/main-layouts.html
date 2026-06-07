@@ -1,0 +1,30 @@
+<div class="app-container" [class.dark-mode]="theme.isDarkMode()">
+
+  <!-- Overlay mobile — géré ICI, pas dans sidebar.css -->
+  @if (isSidebarOpen()) {
+    <div
+      class="sidebar-overlay"
+      (click)="closeSidebar()"
+      (keydown.escape)="closeSidebar()"
+      role="button"
+      tabindex="0"
+      aria-label="Fermer le menu"
+    ></div>
+  }
+
+  <!-- Sidebar -->
+  <aside class="app-sidebar" [class.open]="isSidebarOpen()">
+    <app-sidebar></app-sidebar>
+  </aside>
+
+  <!-- Contenu principal -->
+  <main class="app-main">
+    <header class="app-navbar">
+      <app-navbar (menuToggle)="toggleSidebar()"></app-navbar>
+    </header>
+    <div class="app-content">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+</div>

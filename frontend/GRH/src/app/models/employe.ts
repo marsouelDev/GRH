@@ -8,5 +8,5 @@ export interface EmployeModels {
   salaire: number;
   is_active?: boolean;
   date_joined?: string;
-  notification?: string; // Capturera le message d'envoi du mail de Django
+  notification?: string;
 }

@@ -20,7 +20,7 @@ class Poste(models.Model):
     employes = models.ManyToManyField(Employe,blank=True,related_name='postes',verbose_name="Employés")
 
     def getNombreOccupants(self):
-        return self.employes.count()
+        return self.contrats.filter(statut='ACTIF').count()
 
     def estVacant(self):
         return self.employes.count() == 0

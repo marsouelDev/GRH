@@ -9,10 +9,9 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
-
+from notification.models import Notification
 from .models import Contrat
 from .serializers import ContratSerializer
-
 from RH.models import RH
 from administrateur.models import Administrateur
 from employees.models import Employe
@@ -82,10 +81,30 @@ class ContratDetailUpdateDeleteAPIView(APIView):
         if not contrat: 
             return Response({"detail": "Introuvable."}, status=status.HTTP_404_NOT_FOUND)
         
+        nom_employe = f"{contrat.employe.nom} {contrat.employe.prenom}"
+        type_contrat = contrat.type_contrat
+        
+        # Clôturer le contrat
         contrat.statut = 'TERMINE'
         contrat.save()
-        return Response({"detail": "Le contrat a bien été marqué comme terminé."}, status=status.HTTP_200_OK)
-
+        
+        rhs = RH.objects.filter(is_active=True).exclude(id=request.user.id)
+        for rh in rhs:
+            Notification.envoyer(
+                destinataire=rh,
+                type_notif=Notification.TypeNotification.CONTRAT_CLOTURE,
+                titre=f"📋 Contrat clôturé - {nom_employe}",
+                message=(
+                    f"{request.user.nom} {request.user.prenom} a clôturé le contrat "
+                    f"de {nom_employe} (type: {type_contrat})."
+                ),
+                lien=f"/contrats/{contrat.id}"
+            )
+        
+        return Response({
+            "detail": "Le contrat a bien été marqué comme terminé.",
+            "notifications_envoyees": rhs.count()
+        }, status=status.HTTP_200_OK)
 
 class GenererContratPDFView(APIView):
     permission_classes = [IsRhOrAdminUserRole]

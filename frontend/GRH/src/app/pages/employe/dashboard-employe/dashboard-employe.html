@@ -1,60 +1,535 @@
-<div class="dash">
-    <div class="page-header">
-        <div>
-            <h1 class="page-h1">Mon espace</h1>
-            <p class="page-sub">Bienvenue, voici votre tableau de bord</p>
-        </div>
+<div class="dsh">
+
+    <!-- NOTIFICATION ERREUR -->
+    <div class="dsh-notif" *ngIf="errorMessage" (click)="errorMessage = ''">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ errorMessage }}</span>
+        <i class="bi bi-x-lg dsh-notif__close"></i>
     </div>
 
-    <div class="stats-grid">
-
-        <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(52,199,123,0.12);color:#34c77b">🌴</div>
-            <div class="stat-body">
-                <span class="stat-value"></span>
-                <span class="stat-label">Congés restants</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(245,166,35,0.12);color:#f5a623">✈️</div>
-            <div class="stat-body">
-                <span class="stat-value"></span>
-                <span class="stat-label">Congés pris</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(79,142,247,0.12);color:#4f8ef7">⏱</div>
-            <div class="stat-body">
-                <span class="stat-value"></span>
-                <span class="stat-label">Présences</span>
-            </div>
-        </div>
-
+    <!-- LOADER -->
+    <div class="dsh-loader" *ngIf="chargement">
+        <div class="dsh-loader__ring"></div>
+        <span>Chargement de votre dashboard…</span>
     </div>
 
-    <div class="section">
-        <h3 class="section-title">Mes actions</h3>
-        <div class="actions-grid">
+    <ng-container *ngIf="!chargement">
 
-            <a routerLink="/conges/create" class="action-card">
-                <div class="action-icon">📅</div>
+        <!-- ══ HEADER ══ -->
+        <header class="dsh-header">
+            <div class="dsh-header__left">
+                <div class="dsh-header__avatar">{{ nomComplet[0] | uppercase }}</div>
                 <div>
-                    <p class="action-title">Demander un congé</p>
-                    <p class="action-sub">Soumettre une nouvelle demande</p>
+                    <h1 class="dsh-header__title">Salut, {{ nomComplet }} 👋</h1>
+                    <p class="dsh-header__sub">
+                        <i class="bi bi-calendar3"></i>
+                        {{ today | date:'EEEE dd MMMM yyyy' }}
+                    </p>
                 </div>
-            </a>
+            </div>
+            <div class="dsh-header__badge">
+                <i class="bi bi-person-badge-fill"></i>
+                <span>Employé</span>
+            </div>
+        </header>
 
-            <a routerLink="/profile" class="action-card">
-                <div class="action-icon">👤</div>
-                <div>
-                    <p class="action-title">Mon profil</p>
-                    <p class="action-sub">Consulter et modifier mes infos</p>
+        <!-- ══ KPIs ══ -->
+        <div class="kpi-grid">
+            <div class="kpi kpi--green">
+                <div class="kpi__ico"><i class="bi bi-person-check-fill"></i></div>
+                <div class="kpi__body">
+                    <span class="kpi__val">{{ mesPresencesMois }}</span>
+                    <span class="kpi__lbl">Présences ce mois</span>
                 </div>
-            </a>
+                <div class="kpi__badge">{{ tauxPresence }}%</div>
+            </div>
 
+            <div class="kpi kpi--red">
+                <div class="kpi__ico"><i class="bi bi-person-x-fill"></i></div>
+                <div class="kpi__body">
+                    <span class="kpi__val">{{ mesAbsencesMois }}</span>
+                    <span class="kpi__lbl">Absences ce mois</span>
+                </div>
+                <div class="kpi__dot kpi__dot--ok" *ngIf="mesAbsencesMois === 0">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <div class="kpi__dot kpi__dot--err" *ngIf="mesAbsencesMois > 0">
+                    <i class="bi bi-exclamation"></i>
+                </div>
+            </div>
+
+            <div class="kpi kpi--amber">
+                <div class="kpi__ico"><i class="bi bi-clock-history"></i></div>
+                <div class="kpi__body">
+                    <span class="kpi__val">{{ mesRetardsMois }}</span>
+                    <span class="kpi__lbl">Retards ce mois</span>
+                </div>
+                <div class="kpi__dot kpi__dot--ok" *ngIf="mesRetardsMois === 0">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+            </div>
+
+            <div class="kpi kpi--blue">
+                <div class="kpi__ico"><i class="bi bi-calendar2-week-fill"></i></div>
+                <div class="kpi__body">
+                    <span class="kpi__val">{{ congesTotalDemandes }}</span>
+                    <span class="kpi__lbl">Demandes de congé</span>
+                </div>
+            </div>
         </div>
-    </div>
 
+        <!-- ══ TAUX + CONGÉS ══ -->
+        <div class="mid-grid">
+            <div class="card">
+                <div class="card__head">
+                    <div class="card__ico card__ico--green">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <div>
+                        <h3 class="card__title">Mon taux de présence</h3>
+                        <p class="card__sub">Ce mois en cours</p>
+                    </div>
+                </div>
+                <div class="rate-body">
+                    <div class="rate-circle">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="38" fill="none" stroke="var(--border)" stroke-width="9" />
+                            <circle cx="50" cy="50" r="38" fill="none" stroke="#1D9E75" stroke-width="9"
+                                stroke-linecap="round" stroke-dasharray="238.76"
+                                [attr.stroke-dashoffset]="238.76 - (238.76 * tauxPresence / 100)"
+                                transform="rotate(-90 50 50)" />
+                        </svg>
+                        <div class="rate-circle__center">
+                            <span class="rate-circle__val">{{ tauxPresence }}%</span>
+                            <span class="rate-circle__lbl">présence</span>
+                        </div>
+                    </div>
+                    <div class="rate-rows">
+                        <div class="rate-row rate-row--green">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span class="rate-row__lbl">Présences</span>
+                            <span class="rate-row__val">{{ mesPresencesMois }} j.</span>
+                        </div>
+                        <div class="rate-row rate-row--red">
+                            <i class="bi bi-x-circle-fill"></i>
+                            <span class="rate-row__lbl">Absences</span>
+                            <span class="rate-row__val">{{ mesAbsencesMois }} j.</span>
+                        </div>
+                        <div class="rate-row rate-row--amber">
+                            <i class="bi bi-clock-fill"></i>
+                            <span class="rate-row__lbl">Retards</span>
+                            <span class="rate-row__val">{{ mesRetardsMois }} fois</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card__head">
+                    <div class="card__ico card__ico--blue">
+                        <i class="bi bi-umbrella-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="card__title">Mes congés</h3>
+                        <p class="card__sub">Historique annuel</p>
+                    </div>
+                </div>
+                <div class="conge-gauge">
+                    <div class="conge-gauge__top">
+                        <span class="conge-gauge__val">{{ congesJoursPris }}</span>
+                        <span class="conge-gauge__max">jours pris cette année</span>
+                    </div>
+                    <div class="conge-gauge__track">
+                        <div class="conge-gauge__fill" [style.width.%]="congesPourcent > 100 ? 100 : congesPourcent"
+                            [class.conge-gauge__fill--over]="congesPourcent > 100">
+                        </div>
+                    </div>
+                    <div class="conge-gauge__info">
+                        <span>{{ congesTotalDemandes }} demande(s) au total</span>
+                        <span *ngIf="congesPourcent > 100" class="conge-gauge__over">
+                            +{{ congesPourcent - 100 }}%
+                        </span>
+                    </div>
+                </div>
+                <div class="conge-stats">
+                    <div class="conge-stat conge-stat--amber">
+                        <i class="bi bi-hourglass-split"></i>
+                        <span class="conge-stat__val">{{ congesEnAttente }}</span>
+                        <span class="conge-stat__lbl">En attente</span>
+                    </div>
+                    <div class="conge-stat conge-stat--green">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span class="conge-stat__val">{{ congesApprouves }}</span>
+                        <span class="conge-stat__lbl">Approuvés</span>
+                    </div>
+                    <div class="conge-stat conge-stat--red">
+                        <i class="bi bi-x-circle-fill"></i>
+                        <span class="conge-stat__val">{{ congesRefuses }}</span>
+                        <span class="conge-stat__lbl">Refusés</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ GRAPHIQUE ══ -->
+        <section class="section">
+            <h2 class="section__title">
+                <i class="bi bi-bar-chart-line"></i> Mes présences ce mois
+            </h2>
+            <div class="chart-card">
+                <div class="chart-card__head">
+                    <div class="chart-card__title-wrap">
+                        <div class="card__ico card__ico--blue">
+                            <i class="bi bi-bar-chart-fill"></i>
+                        </div>
+                        <div>
+                            <h3 class="chart-card__title">Répartition par semaine</h3>
+                            <p class="card__sub">Vue hebdomadaire du mois en cours</p>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <span class="chart-legend__item">
+                            <span class="chart-legend__sq" style="background:#1D9E75"></span>Présents
+                        </span>
+                        <span class="chart-legend__item">
+                            <span class="chart-legend__sq" style="background:#E24B4A"></span>Absents
+                        </span>
+                        <span class="chart-legend__item">
+                            <span class="chart-legend__sq" style="background:#EF9F27"></span>Retards
+                        </span>
+                    </div>
+                </div>
+                <div class="chart-body">
+                    <canvas baseChart [data]="barChartData" [type]="barChartType" [options]="barChartOptions">
+                    </canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ LISTE DES CONGÉS - VERSION PRO ══ -->
+        <section class="section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section__title">
+                        <i class="bi bi-calendar2-week"></i> Liste des congés
+                    </h2>
+                    <p class="section__subtitle">Gérez et suivez toutes vos demandes de congés</p>
+                </div>
+                <a routerLink="/conges" class="btn btn--primary">
+                    <i class="bi bi-plus-lg"></i> Nouvelle demande
+                </a>
+            </div>
+
+            <div class="conge-list-card">
+
+                <!-- TOOLBAR -->
+                <div class="conge-list-card__toolbar">
+                    <div class="search-box">
+                        <i class="bi bi-search search-box__icon"></i>
+                        <input type="text" class="search-box__input" placeholder="Rechercher par type, motif..."
+                            [value]="rechercheConge" (input)="rechercherConge($event)">
+                        <button class="search-box__clear" *ngIf="rechercheConge"
+                            (click)="rechercheConge=''; reinitialiserFiltres()">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+
+                    <div class="filter-pills">
+                        <button class="filter-pill" [class.filter-pill--active]="filtreStatut === 'TOUS'"
+                            (click)="filtrerParStatut('TOUS')">
+                            <i class="bi bi-collection"></i>
+                            Tous
+                            <span class="filter-pill__count">{{ congesAffiches.length }}</span>
+                        </button>
+                        <button class="filter-pill filter-pill--amber"
+                            [class.filter-pill--active]="filtreStatut === 'EN_ATTENTE'"
+                            (click)="filtrerParStatut('EN_ATTENTE')">
+                            <i class="bi bi-hourglass-split"></i>
+                            En attente
+                            <span class="filter-pill__count">{{ congesEnAttente }}</span>
+                        </button>
+                        <button class="filter-pill filter-pill--green"
+                            [class.filter-pill--active]="filtreStatut === 'APPROUVE'"
+                            (click)="filtrerParStatut('APPROUVE')">
+                            <i class="bi bi-check-circle"></i>
+                            Approuvés
+                            <span class="filter-pill__count">{{ congesApprouves }}</span>
+                        </button>
+                        <button class="filter-pill filter-pill--red"
+                            [class.filter-pill--active]="filtreStatut === 'REFUSE'"
+                            (click)="filtrerParStatut('REFUSE')">
+                            <i class="bi bi-x-circle"></i>
+                            Refusés
+                            <span class="filter-pill__count">{{ congesRefuses }}</span>
+                        </button>
+                    </div>
+
+                    <div class="toolbar-actions">
+                        <button class="toggle-btn" [class.toggle-btn--active]="afficherTousLesConges"
+                            (click)="toggleTousLesConges()" title="Basculer la vue">
+                            <i class="bi" [class.bi-eye-fill]="!afficherTousLesConges"
+                                [class.bi-person-fill]="afficherTousLesConges"></i>
+                            <span class="toggle-btn__label">
+                                {{ afficherTousLesConges ? 'Mes congés' : 'Tous' }}
+                            </span>
+                        </button>
+                        <button class="icon-btn" (click)="reinitialiserFiltres()" title="Réinitialiser">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- RÉSULTATS INFO -->
+                <div class="results-info" *ngIf="rechercheConge || filtreStatut !== 'TOUS'">
+                    <i class="bi bi-funnel-fill"></i>
+                    <span>
+                        <strong>{{ congesFiltres.length }}</strong> résultat(s) trouvé(s)
+                    </span>
+                    <button class="results-info__clear" (click)="reinitialiserFiltres()">
+                        Effacer les filtres <i class="bi bi-x"></i>
+                    </button>
+                </div>
+
+                <!-- TABLEAU -->
+                <div class="table-scroll" *ngIf="congesFiltres.length > 0">
+                    <table class="conge-table">
+                        <thead>
+                            <tr>
+                                <th *ngIf="afficherTousLesConges">Employé</th>
+                                <th class="th-sortable" (click)="trierPar('type_conge')">
+                                    <span>Type</span>
+                                    <i class="bi" [ngClass]="getTriIcon('type_conge')"></i>
+                                </th>
+                                <th class="th-duration">Durée</th>
+                                <th class="th-sortable" (click)="trierPar('date_debut')">
+                                    <span>Début</span>
+                                    <i class="bi" [ngClass]="getTriIcon('date_debut')"></i>
+                                </th>
+                                <th class="th-sortable" (click)="trierPar('date_fin')">
+                                    <span>Fin</span>
+                                    <i class="bi" [ngClass]="getTriIcon('date_fin')"></i>
+                                </th>
+                                <th>Motif</th>
+                                <th class="th-sortable" (click)="trierPar('statut')">
+                                    <span>Statut</span>
+                                    <i class="bi" [ngClass]="getTriIcon('statut')"></i>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let conge of congesPagines; let i = index" class="conge-row"
+                                [style.animation-delay]="(i * 0.05) + 's'">
+
+                                <td *ngIf="afficherTousLesConges">
+                                    <div class="emp-cell">
+                                        <div class="emp-avatar">
+                                            {{ getNomEmploye(conge)[0] | uppercase }}
+                                        </div>
+                                        <div class="emp-info">
+                                            <span class="emp-name">{{ getNomEmploye(conge) }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="type-cell">
+                                        <div class="type-icon">
+                                            <i class="bi" [ngClass]="getTypeIcon(conge.type_conge)"></i>
+                                        </div>
+                                        <div class="type-info">
+                                            <span class="type-name">{{ conge.type_label || conge.type_conge }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="duration-cell">
+                                        <i class="bi bi-clock"></i>
+                                        <span class="duration-value">{{ getDureeLabel(conge) }}</span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="date-cell">
+                                        <div class="date-badge">
+                                            <span class="date-badge__day">{{ conge.date_debut | date:'dd' }}</span>
+                                            <span class="date-badge__month">{{ conge.date_debut | date:'MMM' }}</span>
+                                        </div>
+                                        <span class="date-year">{{ conge.date_debut | date:'yyyy' }}</span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="date-cell">
+                                        <div class="date-badge">
+                                            <span class="date-badge__day">{{ conge.date_fin | date:'dd' }}</span>
+                                            <span class="date-badge__month">{{ conge.date_fin | date:'MMM' }}</span>
+                                        </div>
+                                        <span class="date-year">{{ conge.date_fin | date:'yyyy' }}</span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="motif-cell" [title]="conge.motif || ''">
+                                        <i class="bi bi-chat-left-text"></i>
+                                        <span>{{ conge.motif || '—' }}</span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="statut-cell">
+                                        <span class="statut-badge" [ngClass]="getStatutClass(conge.statut)">
+                                            <i class="bi" [class.bi-hourglass-split]="estEnAttente(conge.statut)"
+                                                [class.bi-check-circle-fill]="estApprouve(conge.statut)"
+                                                [class.bi-x-circle-fill]="estRefuse(conge.statut)">
+                                            </i>
+                                            <span>{{ getStatutLabel(conge.statut) }}</span>
+                                        </span>
+                                        <span class="statut-date" *ngIf="conge.date_validation">
+                                            <i class="bi bi-clock-history"></i>
+                                            {{ conge.date_validation | date:'dd/MM/yy' }}
+                                        </span>
+                                    </div>
+                                </td>
+
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- PAGINATION -->
+                <div class="pagination" *ngIf="totalPages > 1">
+                    <div class="pagination__info">
+                        Page <strong>{{ pageActuelle }}</strong> sur <strong>{{ totalPages }}</strong>
+                        — <span>{{ congesFiltres.length }} résultat(s)</span>
+                    </div>
+                    <div class="pagination__controls">
+                        <button class="pagination__btn" [disabled]="pageActuelle === 1" (click)="changerPage(1)"
+                            title="Première page">
+                            <i class="bi bi-chevron-bar-left"></i>
+                        </button>
+                        <button class="pagination__btn" [disabled]="pageActuelle === 1"
+                            (click)="changerPage(pageActuelle - 1)" title="Page précédente">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+
+                        <div class="pagination__pages">
+                            <button *ngFor="let page of pages" class="pagination__page"
+                                [class.pagination__page--active]="page === pageActuelle" (click)="changerPage(page)">
+                                {{ page }}
+                            </button>
+                        </div>
+
+                        <button class="pagination__btn" [disabled]="pageActuelle === totalPages"
+                            (click)="changerPage(pageActuelle + 1)" title="Page suivante">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                        <button class="pagination__btn" [disabled]="pageActuelle === totalPages"
+                            (click)="changerPage(totalPages)" title="Dernière page">
+                            <i class="bi bi-chevron-bar-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- EMPTY STATE -->
+                <div class="empty-state" *ngIf="congesFiltres.length === 0">
+                    <div class="empty-state__icon">
+                        <i class="bi bi-calendar2-x"></i>
+                    </div>
+                    <h3 class="empty-state__title">
+                        {{ rechercheConge || filtreStatut !== 'TOUS' ? 'Aucun résultat' : 'Aucun congé' }}
+                    </h3>
+                    <p class="empty-state__text">
+                        {{ rechercheConge || filtreStatut !== 'TOUS'
+                        ? 'Essayez de modifier vos critères de recherche.'
+                        : 'Vous n\'avez pas encore fait de demande de congé.' }}
+                    </p>
+                    <div class="empty-state__actions">
+                        <button class="btn btn--ghost" *ngIf="rechercheConge || filtreStatut !== 'TOUS'"
+                            (click)="reinitialiserFiltres()">
+                            <i class="bi bi-arrow-clockwise"></i> Réinitialiser
+                        </button>
+                        <a routerLink="/conges" class="btn btn--primary">
+                            <i class="bi bi-plus-lg"></i> Faire une demande
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ══ STATUT / CONSEILS ══ -->
+        <section class="section">
+            <h2 class="section__title">
+                <i class="bi bi-info-circle"></i> Statut
+            </h2>
+            <div class="status-grid">
+                <div class="status-card status-card--green" *ngIf="tauxPresence >= 90">
+                    <i class="bi bi-award-fill status-card__ico"></i>
+                    <div>
+                        <strong>Excellent !</strong>
+                        <p>Votre taux de présence est de {{ tauxPresence }}%. Continuez ainsi !</p>
+                    </div>
+                </div>
+
+                <div class="status-card status-card--amber" *ngIf="tauxPresence >= 75 && tauxPresence < 90">
+                    <i class="bi bi-exclamation-triangle-fill status-card__ico"></i>
+                    <div>
+                        <strong>Attention</strong>
+                        <p>Votre taux de présence est de {{ tauxPresence }}%. Essayez de l'améliorer.</p>
+                    </div>
+                </div>
+
+                <div class="status-card status-card--red" *ngIf="tauxPresence < 75">
+                    <i class="bi bi-x-octagon-fill status-card__ico"></i>
+                    <div>
+                        <strong>À améliorer</strong>
+                        <p>Votre taux de présence est de {{ tauxPresence }}%. Contactez les RH.</p>
+                    </div>
+                </div>
+
+                <div class="status-card status-card--blue" *ngIf="congesEnAttente > 0">
+                    <i class="bi bi-hourglass-split status-card__ico"></i>
+                    <div>
+                        <strong>Congé en attente</strong>
+                        <p>Vous avez {{ congesEnAttente }} demande(s) en attente de validation.</p>
+                    </div>
+                </div>
+
+                <div class="status-card status-card--green" *ngIf="congesJoursPris > 0 && congesJoursPris <= 10">
+                    <i class="bi bi-calendar2-check-fill status-card__ico"></i>
+                    <div>
+                        <strong>Bon démarrage</strong>
+                        <p>Vous avez pris {{ congesJoursPris }} jour(s) de congé cette année.</p>
+                    </div>
+                </div>
+
+                <div class="status-card status-card--amber" *ngIf="congesJoursPris > 10 && congesJoursPris <= 20">
+                    <i class="bi bi-calendar-range status-card__ico"></i>
+                    <div>
+                        <strong>Utilisation modérée</strong>
+                        <p>Vous avez déjà pris {{ congesJoursPris }} jours de congé cette année.</p>
+                    </div>
+                </div>
+
+                <div class="status-card status-card--green" *ngIf="congesJoursPris > 20">
+                    <i class="bi bi-award-fill status-card__ico"></i>
+                    <div>
+                        <strong>Vous profitez bien !</strong>
+                        <p>Vous avez pris {{ congesJoursPris }} jours de congé cette année. Bravo !</p>
+                    </div>
+                </div>
+
+                <div class="status-card status-card--red" *ngIf="congesRefuses > 0">
+                    <i class="bi bi-x-circle-fill status-card__ico"></i>
+                    <div>
+                        <strong>Congé refusé</strong>
+                        <p>{{ congesRefuses }} demande(s) refusée(s). Consultez les RH pour plus d'infos.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </ng-container>
 </div>

@@ -7,10 +7,9 @@
     [class.theme-rh]="authService.isRH()" [class.theme-employe]="authService.isEmploye()"
     [class.dark-mode]="isDarkMode">
 
-    <!-- ── Header ── -->
+    <!-- ─ Header ── -->
     <div class="sidebar-header">
         <div class="logo-wrapper">
-            <!-- ✅ Logo adaptatif selon le thème -->
             @if (isDarkMode) {
             <img src="assets/logo/dark rh.png" alt="Logo WorkFlow" class="logo" />
             } @else {
@@ -33,7 +32,8 @@
         @if (authService.isAdmin()) {
         <div class="nav-section">
             <small class="nav-section-title">Administration</small>
-            <a routerLinkActive="active" routerLink="/admin/dashboard-admin" class="nav-item">
+            <a routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" routerLink="/admin/dashboard-admin"
+                class="nav-item">
                 <i class="bi bi-speedometer2 nav-icon"></i><span>Dashboard</span>
             </a>
             <a routerLinkActive="active" routerLink="/administrateurs" class="nav-item">
@@ -77,10 +77,11 @@
         @if (authService.isRH()) {
         <div class="nav-section">
             <small class="nav-section-title">Ressources Humaines</small>
-            <a routerLinkActive="active" routerLink="/rh/dashboard-rh" class="nav-item">
+            <a routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" routerLink="/rh/dashboard-rh"
+                class="nav-item">
                 <i class="bi bi-grid-1x2-fill nav-icon"></i><span>Dashboard RH</span>
             </a>
-            <a routerLinkActive="active" routerLink="/rh" class="nav-item">
+            <a routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" routerLink="/rh" class="nav-item">
                 <i class="bi bi-people-fill nav-icon"></i><span>Ressources Humaines</span>
             </a>
             <a routerLinkActive="active" routerLink="/employees" class="nav-item">
@@ -118,7 +119,8 @@
         @if (authService.isEmploye()) {
         <div class="nav-section">
             <small class="nav-section-title">Mon Espace</small>
-            <a routerLinkActive="active" routerLink="/employe/dashboard-employe" class="nav-item">
+            <a routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+                routerLink="/employe/dashboard-employe" class="nav-item">
                 <i class="bi bi-house-door nav-icon"></i><span>Dashboard</span>
             </a>
             <a routerLinkActive="active" routerLink="/presences" class="nav-item">

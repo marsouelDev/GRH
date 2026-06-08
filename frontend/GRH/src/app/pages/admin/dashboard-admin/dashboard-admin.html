@@ -1,86 +1,388 @@
-<div class="dash">
-    <!-- ══ PAGE HEADER ════════════════════════════════════════════ -->
-    <div class="page-header">
-        <div>
-            <h1 class="page-h1">Dashboard Administrateur</h1>
-            <p class="page-sub">Vue d'ensemble de la plateforme</p>
-        </div>
+<div class="dsh" [class.dsh--dark]="isDarkMode">
+
+    <!-- Notification erreur -->
+    <div class="dsh-notif" *ngIf="errorMessage" (click)="errorMessage = ''">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ errorMessage }}</span>
+        <i class="bi bi-x-lg dsh-notif__close"></i>
     </div>
 
-    <!-- ══ STATS CARDS ════════════════════════════════════════════ -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(79,142,247,0.12);color:#4f8ef7">🧑‍💼</div>
-            <div class="stat-body">
-                <span class="stat-value">{{ stats.employes }}</span>
-                <span class="stat-label">Employés</span>
-            </div>
-            <div class="stat-trend up">+2 ce mois</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(52,199,123,0.12);color:#34c77b">👥</div>
-            <div class="stat-body">
-                <span class="stat-value">{{ stats.rh }}</span>
-                <span class="stat-label">Équipe RH</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(245,166,35,0.12);color:#f5a623">📄</div>
-            <div class="stat-body">
-                <span class="stat-value">{{ stats.contrats }}</span>
-                <span class="stat-label">Contrats actifs</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon" style="background:rgba(240,92,92,0.12);color:#f05c5c">📅</div>
-            <div class="stat-body">
-                <span class="stat-value">{{ stats.conges }}</span>
-                <span class="stat-label">Congés en attente</span>
-            </div>
-            @if (stats.conges > 0) {
-            <div class="stat-trend warn">À traiter</div>
-            }
-        </div>
+    <!-- Loader -->
+    <div class="dsh-loader" *ngIf="chargement">
+        <div class="dsh-loader__ring"></div>
+        <span>Chargement du dashboard…</span>
     </div>
 
-    <!-- ══ ACTIONS RAPIDES ════════════════════════════════════════ -->
-    <div class="section">
-        <h3 class="section-title">Actions rapides</h3>
-        <div class="actions-grid">
-            <a routerLink="/admin/employes/create" class="action-card">
-                <div class="action-icon">➕</div>
-                <div>
-                    <p class="action-title">Ajouter un employé</p>
-                    <p class="action-sub">Créer un nouveau compte employé</p>
-                </div>
-            </a>
+    <ng-container *ngIf="!chargement && stats">
 
-            <a routerLink="/admin/rh/create" class="action-card">
-                <div class="action-icon">➕</div>
-                <div>
-                    <p class="action-title">Ajouter un RH</p>
-                    <p class="action-sub">Créer un compte responsable RH</p>
+        <!-- ═══════════════════════════
+         HEADER
+    ══════════════════════════════ -->
+        <header class="dsh-header">
+            <div class="dsh-header__left">
+                <div class="dsh-header__icon">
+                    <i class="bi bi-grid-1x2-fill"></i>
                 </div>
-            </a>
+                <div>
+                    <h1 class="dsh-header__title">Dashboard</h1>
+                    <p class="dsh-header__sub">Vue d'ensemble de l'entreprise</p>
+                </div>
+            </div>
+            <div class="dsh-header__date">
+                <i class="bi bi-calendar3"></i>
+                <span>{{ today | date:'EEEE dd MMMM yyyy' }}</span>
+            </div>
+        </header>
 
-            <a routerLink="/admin/contrats" class="action-card">
-                <div class="action-icon">📄</div>
-                <div>
-                    <p class="action-title">Gérer les contrats</p>
-                    <p class="action-sub">Voir et modifier les contrats</p>
-                </div>
-            </a>
+        <!-- ═══════════════════════════
+         KPIs
+    ══════════════════════════════ -->
+        <div class="kpi-grid">
 
-            <a routerLink="/admin/conges" class="action-card">
-                <div class="action-icon">📅</div>
-                <div>
-                    <p class="action-title">Valider les congés</p>
-                    <p class="action-sub">Approuver ou refuser les demandes</p>
+            <div class="kpi kpi--blue">
+                <div class="kpi__ico"><i class="bi bi-people-fill"></i></div>
+                <div class="kpi__body">
+                    <span class="kpi__val">{{ stats.kpis.total_employes }}</span>
+                    <span class="kpi__lbl">Employés actifs</span>
                 </div>
-            </a>
+                <div class="kpi__trend kpi__trend--up">
+                    <i class="bi bi-arrow-up-right"></i>
+                </div>
+            </div>
+
+            <div class="kpi kpi--green">
+                <div class="kpi__ico"><i class="bi bi-person-check-fill"></i></div>
+                <div class="kpi__body">
+                    <span class="kpi__val">{{ stats.kpis.presents_aujourdhui }}</span>
+                    <span class="kpi__lbl">Présents aujourd'hui</span>
+                </div>
+                <div class="kpi__badge">{{ stats.kpis.taux_presence }}%</div>
+            </div>
+
+            <div class="kpi kpi--amber">
+                <div class="kpi__ico"><i class="bi bi-hourglass-split"></i></div>
+                <div class="kpi__body">
+                    <span class="kpi__val">{{ stats.kpis.conges_en_attente }}</span>
+                    <span class="kpi__lbl">Congés en attente</span>
+                </div>
+                <div class="kpi__trend kpi__trend--warn" *ngIf="stats.kpis.conges_en_attente > 0">
+                    <i class="bi bi-exclamation"></i>
+                </div>
+            </div>
+
+            <div class="kpi kpi--red">
+                <div class="kpi__ico"><i class="bi bi-bell-fill"></i></div>
+                <div class="kpi__body">
+                    <span class="kpi__val">{{ stats.kpis.alertes }}</span>
+                    <span class="kpi__lbl">Alertes à traiter</span>
+                </div>
+                <div class="kpi__trend kpi__trend--ok" *ngIf="stats.kpis.alertes === 0">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+            </div>
+
         </div>
-    </div>
+
+        <!-- ═══════════════════════════
+         STATS PAR PÉRIODE
+    ══════════════════════════════ -->
+        <section class="section">
+            <h2 class="section__title">
+                <i class="bi bi-calendar-week"></i> Statistiques par période
+            </h2>
+
+            <div class="period-grid">
+
+                <div class="period-card">
+                    <div class="period-card__head">
+                        <span class="period-card__label">Aujourd'hui</span>
+                        <span class="period-card__rate">{{ stats.kpis.taux_presence }}%</span>
+                    </div>
+                    <div class="period-card__rows">
+                        <div class="prow prow--green">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Présents</span>
+                            <span class="prow__val">{{ stats.kpis.presents_aujourdhui }}</span>
+                        </div>
+                        <div class="prow prow--red">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Absents</span>
+                            <span class="prow__val">{{ stats.kpis.absents_aujourdhui }}</span>
+                        </div>
+                        <div class="prow prow--amber">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Retards</span>
+                            <span class="prow__val">{{ stats.kpis.retards_aujourdhui }}</span>
+                        </div>
+                    </div>
+                    <div class="period-card__bar">
+                        <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_presence"></div>
+                    </div>
+                </div>
+
+                <div class="period-card">
+                    <div class="period-card__head">
+                        <span class="period-card__label">Cette semaine</span>
+                        <span class="period-card__rate">{{ stats.kpis.taux_semaine }}%</span>
+                    </div>
+                    <div class="period-card__rows">
+                        <div class="prow prow--green">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Présents</span>
+                            <span class="prow__val">{{ stats.kpis.semaine_presents }}</span>
+                        </div>
+                        <div class="prow prow--red">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Absents</span>
+                            <span class="prow__val">{{ stats.kpis.semaine_absents }}</span>
+                        </div>
+                        <div class="prow prow--amber">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Retards</span>
+                            <span class="prow__val">{{ stats.kpis.semaine_retards }}</span>
+                        </div>
+                    </div>
+                    <div class="period-card__bar">
+                        <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_semaine"></div>
+                    </div>
+                </div>
+
+                <div class="period-card">
+                    <div class="period-card__head">
+                        <span class="period-card__label">Ce mois</span>
+                        <span class="period-card__rate">{{ stats.kpis.taux_mois }}%</span>
+                    </div>
+                    <div class="period-card__rows">
+                        <div class="prow prow--green">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Présents</span>
+                            <span class="prow__val">{{ stats.kpis.mois_presents }}</span>
+                        </div>
+                        <div class="prow prow--red">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Absents</span>
+                            <span class="prow__val">{{ stats.kpis.mois_absents }}</span>
+                        </div>
+                        <div class="prow prow--amber">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Retards</span>
+                            <span class="prow__val">{{ stats.kpis.mois_retards }}</span>
+                        </div>
+                    </div>
+                    <div class="period-card__bar">
+                        <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_mois"></div>
+                    </div>
+                </div>
+
+                <div class="period-card">
+                    <div class="period-card__head">
+                        <span class="period-card__label">Cette année</span>
+                        <span class="period-card__rate">{{ stats.kpis.taux_annee }}%</span>
+                    </div>
+                    <div class="period-card__rows">
+                        <div class="prow prow--green">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Présents</span>
+                            <span class="prow__val">{{ stats.kpis.annee_presents }}</span>
+                        </div>
+                        <div class="prow prow--red">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Absents</span>
+                            <span class="prow__val">{{ stats.kpis.annee_absents }}</span>
+                        </div>
+                        <div class="prow prow--amber">
+                            <span class="prow__dot"></span>
+                            <span class="prow__lbl">Retards</span>
+                            <span class="prow__val">{{ stats.kpis.annee_retards }}</span>
+                        </div>
+                    </div>
+                    <div class="period-card__bar">
+                        <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_annee"></div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════
+         GRAPHIQUES
+    ══════════════════════════════ -->
+        <section class="section">
+            <h2 class="section__title">
+                <i class="bi bi-bar-chart-line"></i> Analyses graphiques
+            </h2>
+
+            <div class="charts-grid">
+
+                <!-- Barres semaine -->
+                <div class="chart-card chart-card--wide">
+                    <div class="chart-card__head">
+                        <div class="chart-card__title-wrap">
+                            <div class="chart-card__ico chart-card__ico--blue">
+                                <i class="bi bi-bar-chart-fill"></i>
+                            </div>
+                            <h3 class="chart-card__title">Présences de la semaine</h3>
+                        </div>
+                        <div class="chart-legend">
+                            <span class="chart-legend__item">
+                                <span class="chart-legend__sq" style="background:#1D9E75"></span>Présents
+                            </span>
+                            <span class="chart-legend__item">
+                                <span class="chart-legend__sq" style="background:#E24B4A"></span>Absents
+                            </span>
+                            <span class="chart-legend__item">
+                                <span class="chart-legend__sq" style="background:#EF9F27"></span>Retards
+                            </span>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas baseChart [data]="barChartData" [type]="barChartType"
+                            [options]="barChartOptions"></canvas>
+                    </div>
+                </div>
+
+                <!-- Donut jour -->
+                <div class="chart-card">
+                    <div class="chart-card__head">
+                        <div class="chart-card__title-wrap">
+                            <div class="chart-card__ico chart-card__ico--purple">
+                                <i class="bi bi-pie-chart-fill"></i>
+                            </div>
+                            <h3 class="chart-card__title">Répartition du jour</h3>
+                        </div>
+                    </div>
+                    <div class="chart-legend chart-legend--col" *ngIf="stats && stats.repartition_statut">
+                        <span class="chart-legend__item" *ngFor="let r of stats.repartition_statut; let i = index">
+                            <span class="chart-legend__sq"
+                                [style.background]="i === 0 ? '#1D9E75' : i === 1 ? '#E24B4A' : '#EF9F27'">
+                            </span>
+                            {{ r.label }}
+                            <span class="chart-legend__pct">
+                                {{ totalDuJour > 0 ? (r.value / totalDuJour * 100 | number:'1.0-0') + '%' : '0%' }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="chart-body chart-body--sm chart-donut-wrap">
+                        <div class="chart-donut-center">
+                            <span class="chart-donut-center__val">{{ totalDuJour }}</span>
+                            <span class="chart-donut-center__lbl">total</span>
+                        </div>
+                        <canvas baseChart [data]="doughnutChartData" [type]="doughnutChartType"
+                            [options]="doughnutChartOptions"></canvas>
+                    </div>
+                </div>
+
+                <!-- Ligne 12 mois -->
+                <div class="chart-card chart-card--full">
+                    <div class="chart-card__head">
+                        <div class="chart-card__title-wrap">
+                            <div class="chart-card__ico chart-card__ico--teal">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                            <h3 class="chart-card__title">Évolution sur 12 mois</h3>
+                        </div>
+                        <div class="chart-legend">
+                            <span class="chart-legend__item">
+                                <span class="chart-legend__sq" style="background:#1D9E75"></span>Présents
+                            </span>
+                            <span class="chart-legend__item">
+                                <span class="chart-legend__line" style="border-color:#E24B4A"></span>Absents
+                            </span>
+                            <span class="chart-legend__item">
+                                <span class="chart-legend__sq" style="background:#EF9F27"></span>Retards
+                            </span>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas baseChart [data]="lineChartData" [type]="lineChartType"
+                            [options]="lineChartOptions"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════
+         ACTIVITÉS + ALERTES
+    ══════════════════════════════ -->
+        <section class="section">
+            <div class="bottom-grid">
+
+                <div class="feed-card">
+                    <div class="feed-card__head">
+                        <div class="chart-card__ico chart-card__ico--blue">
+                            <i class="bi bi-activity"></i>
+                        </div>
+                        <h3>Activités récentes</h3>
+                    </div>
+                    <div class="feed-list">
+                        <div class="feed-item" *ngFor="let a of stats.activites_recentes">
+                            <div class="feed-item__ico" [class]="'feed-item__ico--' + a.type">
+                                <i class="bi" [class]="a.icon"></i>
+                            </div>
+                            <div class="feed-item__body">
+                                <p class="feed-item__text">{{ a.text }}</p>
+                                <span class="feed-item__time">
+                                    <i class="bi bi-clock"></i> {{ a.time }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="empty-state" *ngIf="stats.activites_recentes.length === 0">
+                            <i class="bi bi-inbox"></i>
+                            <p>Aucune activité récente</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert-card">
+                    <div class="feed-card__head">
+                        <div class="chart-card__ico chart-card__ico--amber">
+                            <i class="bi bi-bell-fill"></i>
+                        </div>
+                        <h3>À traiter</h3>
+                    </div>
+                    <div class="alert-list">
+
+                        <div class="alert-item alert-item--amber" *ngIf="stats.kpis.conges_en_attente > 0">
+                            <div class="alert-item__ico"><i class="bi bi-hourglass-split"></i></div>
+                            <div class="alert-item__body">
+                                <span class="alert-item__count">{{ stats.kpis.conges_en_attente }}</span>
+                                <span class="alert-item__text">congé(s) en attente de validation</span>
+                            </div>
+                            <a routerLink="/conges" class="alert-item__link">
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+
+                        <div class="alert-item alert-item--blue" *ngIf="stats.kpis.justifs_en_attente > 0">
+                            <div class="alert-item__ico"><i class="bi bi-file-earmark-text-fill"></i></div>
+                            <div class="alert-item__body">
+                                <span class="alert-item__count">{{ stats.kpis.justifs_en_attente }}</span>
+                                <span class="alert-item__text">justification(s) à reviewer</span>
+                            </div>
+                            <a routerLink="/justifications" class="alert-item__link">
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+
+                        <div class="alert-item alert-item--green" *ngIf="stats.kpis.justifs_validees > 0">
+                            <div class="alert-item__ico"><i class="bi bi-check-circle-fill"></i></div>
+                            <div class="alert-item__body">
+                                <span class="alert-item__count">{{ stats.kpis.justifs_validees }}</span>
+                                <span class="alert-item__text">justification(s) validée(s)</span>
+                            </div>
+                        </div>
+
+                        <div class="empty-state" *ngIf="stats.kpis.alertes === 0">
+                            <i class="bi bi-check-circle"></i>
+                            <p>Tout est à jour !</p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </ng-container>
 </div>

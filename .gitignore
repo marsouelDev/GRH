@@ -27,3 +27,4 @@ frontend/dist/
 frontend/GRH/node_modules/
 frontend/GRH/.angular/
 frontend/GRH/dist/
+node_modules

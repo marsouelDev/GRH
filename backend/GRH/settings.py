@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "rapport",
     "notification",
     "django_crontab",
+    "analytics",
 ]
 
 MIDDLEWARE = [
@@ -204,3 +205,37 @@ CRONJOBS = [
     # Tous les lundis à 9h (alerte plus large)
     ('0 9 * * 1', 'django.core.management.call_command', ['verifier_expiration_contrats', '--jours=30']),
 ]
+
+# ═══════════════════════════════════════════════════════════════
+# CONFIGURATION DU CACHE DJANGO
+# ═══════════════════════════════════════════════════════════════
+
+# Option 1 : Cache en mémoire (recommandé pour développement)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'grh-dashboard-cache',
+        'TIMEOUT': 300,  # 5 minutes par défaut
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,  # Nombre max d'entrées en cache
+        }
+    }
+}
+
+# Option 2 : Cache Redis (recommandé pour production)
+# pip install redis django-redis
+"""
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'TIMEOUT': 300,
+    }
+}
+"""
+
+# Clé de préfixe pour éviter les conflits
+CACHE_KEY_PREFIX = 'grh_'

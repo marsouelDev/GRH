@@ -1,0 +1,475 @@
+<!-- =====================================================================
+     PRESENCE LIST COMPONENT — TEMPLATE
+     Gestion du badgeage et suivi des présences
+     ===================================================================== -->
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!--   MODAL NOTIFICATION (Succès / Erreur) -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="message || errorMessage" (click)="dismissModal()">
+    <div class="modal" [class.modal--success]="!!message" [class.modal--error]="!!errorMessage"
+        (click)="$event.stopPropagation()">
+
+        <!-- Icône -->
+        <div class="modal__icon">
+            <i class="bi" [class.bi-check-circle-fill]="!!message"
+                [class.bi-exclamation-triangle-fill]="!!errorMessage">
+            </i>
+        </div>
+
+        <!-- Contenu -->
+        <div class="modal__body">
+            <p class="modal__title">{{ message ? 'Succès' : 'Erreur' }}</p>
+            <p class="modal__message">{{ message || errorMessage }}</p>
+        </div>
+
+        <!-- Bouton fermer -->
+        <button class="modal__close" (click)="dismissModal()" aria-label="Fermer">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!--   PAGE PRINCIPALE -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="page">
+
+    <!-- ── EN-TÊTE ───────────────────────────────────────────── -->
+    <header class="header">
+        <div class="header__left">
+            <div class="header__icon" aria-hidden="true">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div>
+                <h1 class="header__title">Présences</h1>
+                <p class="header__sub" *ngIf="isManager">
+                    Suivi global — {{ presences.length }} enregistrement(s)
+                </p>
+                <p class="header__sub" *ngIf="isEmploye">
+                    Bonjour, <strong>{{ nomAffiche }}</strong>
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── BADGEAGE (Employé uniquement) ─────────────────────── -->
+    <section class="badge-panel" *ngIf="isEmploye">
+
+        <div class="badge-panel__info">
+
+            <!-- Date -->
+            <div class="badge-panel__date">
+                <i class="bi bi-calendar3" aria-hidden="true"></i> Aujourd'hui
+            </div>
+
+            <!-- ════════════════════════════════════════════════════════ -->
+            <!--   CAS 1 : Une présence existe pour aujourd'hui          -->
+            <!-- ════════════════════════════════════════════════════════ -->
+            <ng-container *ngIf="presenceAujourdhui as p; else noPresence">
+
+                <!-- Cartes Arrivée / Départ -->
+                <div class="badge-panel__times">
+
+                    <!-- Carte Arrivée -->
+                    <div class="time-card" [class.time-card--done]="p.heure_arrivee">
+                        <div class="time-card__icon time-card__icon--arrive" aria-hidden="true">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                        </div>
+                        <div class="time-card__body">
+                            <span class="time-card__label">Arrivée</span>
+                            <span class="time-card__value">
+                                {{ (p.heure_arrivee | slice:0:5) || '—' }}
+                            </span>
+                        </div>
+                        <i class="bi bi-check-circle-fill time-card__check" *ngIf="p.heure_arrivee" aria-hidden="true">
+                        </i>
+                    </div>
+
+                    <div class="time-card__sep" aria-hidden="true">
+                        <i class="bi bi-arrow-right"></i>
+                    </div>
+
+                    <!-- Carte Départ -->
+                    <div class="time-card" [class.time-card--done]="p.heure_depart">
+                        <div class="time-card__icon time-card__icon--depart" aria-hidden="true">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </div>
+                        <div class="time-card__body">
+                            <span class="time-card__label">Départ</span>
+                            <span class="time-card__value">
+                                {{ (p.heure_depart | slice:0:5) || '—' }}
+                            </span>
+                        </div>
+                        <i class="bi bi-check-circle-fill time-card__check" *ngIf="p.heure_depart" aria-hidden="true">
+                        </i>
+                    </div>
+                </div>
+
+                <!-- Badge Statut -->
+                <span class="statut-pill statut-pill--lg" [class.statut-pill--present]="p.statut === 'PRESENT'"
+                    [class.statut-pill--absent]="p.statut === 'ABSENT'"
+                    [class.statut-pill--retard]="p.statut === 'RETARD'">
+                    <i class="bi" [class.bi-check-circle-fill]="p.statut === 'PRESENT'"
+                        [class.bi-x-circle-fill]="p.statut === 'ABSENT'" [class.bi-clock-fill]="p.statut === 'RETARD'"
+                        aria-hidden="true">
+                    </i>
+                    {{ p.statut_label }}
+                </span>
+            </ng-container>
+
+            <!-- ════════════════════════════════════════════════════════ -->
+            <!--   CAS 2 : Aucune présence enregistrée aujourd'hui      -->
+            <!-- ════════════════════════════════════════════════════════ -->
+            <ng-template #noPresence>
+                <div class="badge-panel__times">
+                    <div class="time-card">
+                        <div class="time-card__icon time-card__icon--arrive" aria-hidden="true">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                        </div>
+                        <div class="time-card__body">
+                            <span class="time-card__label">Arrivée</span>
+                            <span class="time-card__value">—</span>
+                        </div>
+                    </div>
+                    <div class="time-card__sep" aria-hidden="true">
+                        <i class="bi bi-arrow-right"></i>
+                    </div>
+                    <div class="time-card">
+                        <div class="time-card__icon time-card__icon--depart" aria-hidden="true">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </div>
+                        <div class="time-card__body">
+                            <span class="time-card__label">Départ</span>
+                            <span class="time-card__value">—</span>
+                        </div>
+                    </div>
+                </div>
+                <span class="statut-pill statut-pill--lg statut-pill--absent">
+                    <i class="bi bi-x-circle-fill" aria-hidden="true"></i>
+                    Non badgeé
+                </span>
+            </ng-template>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!--   ACTIONS DE BADGEAGE                                       -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <div class="badge-panel__actions">
+
+            <!-- CAS 1 : Une présence existe -->
+            <ng-container *ngIf="presenceAujourdhui as p; else noPresenceActions">
+
+                <!-- Bouton Arrivée -->
+                <button class="btn-badge btn-badge--arrive" (click)="badgerArrivee()" [disabled]="!!p.heure_arrivee"
+                    [class.btn-badge--done]="!!p.heure_arrivee" aria-label="Badger l'arrivée">
+                    <i class="bi" [class.bi-box-arrow-in-right]="!p.heure_arrivee"
+                        [class.bi-check-lg]="!!p.heure_arrivee" aria-hidden="true">
+                    </i>
+                    <span>{{ p.heure_arrivee ? 'Arrivée enregistrée' : "Badger l'arrivée" }}</span>
+                </button>
+
+                <!-- Bouton Départ -->
+                <button class="btn-badge btn-badge--depart" (click)="badgerDepart()"
+                    [disabled]="!p.heure_arrivee || !!p.heure_depart" [class.btn-badge--done]="!!p.heure_depart"
+                    aria-label="Badger le départ">
+                    <i class="bi" [class.bi-box-arrow-right]="!p.heure_depart" [class.bi-check-lg]="!!p.heure_depart"
+                        aria-hidden="true">
+                    </i>
+                    <span>{{ p.heure_depart ? 'Départ enregistré' : 'Badger le départ' }}</span>
+                </button>
+            </ng-container>
+
+            <!-- CAS 2 : Aucune présence (boutons par défaut) -->
+            <ng-template #noPresenceActions>
+                <!-- Bouton Arrivée actif -->
+                <button class="btn-badge btn-badge--arrive" (click)="badgerArrivee()" aria-label="Badger l'arrivée">
+                    <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                    <span>Badger l'arrivée</span>
+                </button>
+
+                <!-- Bouton Départ désactivé -->
+                <button class="btn-badge btn-badge--depart" disabled aria-label="Badger le départ">
+                    <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                    <span>Badger le départ</span>
+                </button>
+            </ng-template>
+        </div>
+    </section>
+
+    <!-- ── STATISTIQUES ─────────────────────────────────────── -->
+    <div class="stats-grid">
+
+        <!-- Présents -->
+        <div class="stat-card stat-card--present">
+            <div class="stat-card__icon" aria-hidden="true">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="stat-card__body">
+                <span class="stat-card__value">{{ nbPresents }}</span>
+                <span class="stat-card__label">Présents</span>
+            </div>
+            <div class="stat-card__bar" [style.--pct]="(nbPresents / (presences.length || 1)) * 100 + '%'">
+            </div>
+        </div>
+
+        <!-- Retards -->
+        <div class="stat-card stat-card--retard">
+            <div class="stat-card__icon" aria-hidden="true">
+                <i class="bi bi-clock-fill"></i>
+            </div>
+            <div class="stat-card__body">
+                <span class="stat-card__value">{{ nbRetards }}</span>
+                <span class="stat-card__label">Retards</span>
+            </div>
+            <div class="stat-card__bar" [style.--pct]="(nbRetards / (presences.length || 1)) * 100 + '%'">
+            </div>
+        </div>
+
+        <!-- Absents -->
+        <div class="stat-card stat-card--absent">
+            <div class="stat-card__icon" aria-hidden="true">
+                <i class="bi bi-x-circle-fill"></i>
+            </div>
+            <div class="stat-card__body">
+                <span class="stat-card__value">{{ nbAbsents }}</span>
+                <span class="stat-card__label">Absents</span>
+            </div>
+            <div class="stat-card__bar" [style.--pct]="(nbAbsents / (presences.length || 1)) * 100 + '%'">
+            </div>
+        </div>
+
+        <!-- Total -->
+        <div class="stat-card stat-card--total">
+            <div class="stat-card__icon" aria-hidden="true">
+                <i class="bi bi-list-ul"></i>
+            </div>
+            <div class="stat-card__body">
+                <span class="stat-card__value">{{ presences.length }}</span>
+                <span class="stat-card__label">Total</span>
+            </div>
+            <div class="stat-card__bar" style="--pct: 100%"></div>
+        </div>
+    </div>
+
+    <!-- ── TOOLBAR (Recherche + Filtres) ────────────────────── -->
+    <div class="toolbar">
+
+        <!-- Ligne 1 : Recherche + Filtre ID -->
+        <div class="toolbar__top">
+
+            <!-- Recherche -->
+            <div class="search-box">
+                <i class="bi bi-search search-box__icon" aria-hidden="true"></i>
+                <input class="search-box__input" type="text"
+                    [placeholder]="isManager ? 'Rechercher par nom ou date…' : 'Rechercher par date…'"
+                    [(ngModel)]="recherche" aria-label="Rechercher" />
+                <button class="search-box__clear" *ngIf="recherche" (click)="recherche = ''" aria-label="Effacer">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <!-- Filtre ID Employé (Manager) -->
+            <div class="filter-id" *ngIf="isManager">
+                <i class="bi bi-person filter-id__icon" aria-hidden="true"></i>
+                <input class="filter-id__input" type="number" placeholder="ID employé…" [(ngModel)]="employeIdFilter"
+                    (keyup.enter)="loadPresences()" aria-label="Filtrer par ID" />
+                <button class="btn-icon" (click)="loadPresences()" aria-label="Rechercher">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                </button>
+                <button class="btn-icon btn-icon--ghost" *ngIf="employeIdFilter"
+                    (click)="employeIdFilter = undefined; loadPresences()" aria-label="Effacer">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Ligne 2 : Chips de filtres statut -->
+        <div class="toolbar__filters">
+
+            <button class="filter-chip" [class.filter-chip--active]="filtreStatut === null"
+                (click)="filtreStatut = null" [attr.aria-pressed]="filtreStatut === null">
+                <i class="bi bi-grid-fill" aria-hidden="true"></i> Tous
+                <span class="filter-chip__count">{{ presences.length }}</span>
+            </button>
+
+            <button class="filter-chip filter-chip--present" [class.filter-chip--active]="filtreStatut === 'PRESENT'"
+                (click)="filtreStatut = 'PRESENT'" [attr.aria-pressed]="filtreStatut === 'PRESENT'">
+                <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Présents
+                <span class="filter-chip__count">{{ nbPresents }}</span>
+            </button>
+
+            <button class="filter-chip filter-chip--retard" [class.filter-chip--active]="filtreStatut === 'RETARD'"
+                (click)="filtreStatut = 'RETARD'" [attr.aria-pressed]="filtreStatut === 'RETARD'">
+                <i class="bi bi-clock-fill" aria-hidden="true"></i> Retards
+                <span class="filter-chip__count">{{ nbRetards }}</span>
+            </button>
+
+            <button class="filter-chip filter-chip--absent" [class.filter-chip--active]="filtreStatut === 'ABSENT'"
+                (click)="filtreStatut = 'ABSENT'" [attr.aria-pressed]="filtreStatut === 'ABSENT'">
+                <i class="bi bi-x-circle-fill" aria-hidden="true"></i> Absents
+                <span class="filter-chip__count">{{ nbAbsents }}</span>
+            </button>
+
+            <!-- Résultat du filtrage -->
+            <span class="filter-result" *ngIf="recherche || filtreStatut">
+                <i class="bi bi-funnel-fill" aria-hidden="true"></i>
+                {{ presencesFiltrees.length }} résultat(s)
+            </span>
+        </div>
+    </div>
+
+    <!-- ── TABLEAU DES PRÉSENCES ───────────────────────────── -->
+    <div class="table-card">
+        <div class="table-wrap">
+            <table class="table">
+
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col" *ngIf="isManager">Employé</th>
+                        <th scope="col" *ngIf="isEmploye">Arrivée</th>
+                        <th scope="col" *ngIf="isEmploye">Départ</th>
+                        <th scope="col" *ngIf="isEmploye">Heures</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col" *ngIf="isEmploye">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <!-- Cas : données présentes -->
+                    <ng-container *ngIf="presences.length > 0">
+
+                        <tr *ngFor="let p of presencesFiltrees" [class.row--present]="p.statut === 'PRESENT'"
+                            [class.row--absent]="p.statut === 'ABSENT'" [class.row--retard]="p.statut === 'RETARD'">
+
+                            <!-- Date -->
+                            <td>
+                                <span class="date-cell">
+                                    <i class="bi bi-calendar3" aria-hidden="true"></i>
+                                    {{ p.date | date:'dd/MM/yyyy' }}
+                                </span>
+                            </td>
+
+                            <!-- Employé (Manager) -->
+                            <td *ngIf="isManager">
+                                <div class="employe-cell">
+                                    <div class="avatar" aria-hidden="true">
+                                        {{ (p.employe_nom || 'E').charAt(0).toUpperCase() }}
+                                    </div>
+                                    <div>
+                                        <div class="employe-cell__name">{{ p.employe_nom || '—' }}</div>
+                                        <div class="employe-cell__id">#{{ p.employe }}</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Arrivée (Employé) -->
+                            <td *ngIf="isEmploye">
+                                <span class="time-pill time-pill--arrive" *ngIf="p.heure_arrivee; else noArrive">
+                                    <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                                    {{ p.heure_arrivee | slice:0:5 }}
+                                </span>
+                                <ng-template #noArrive>
+                                    <span class="time-pill time-pill--empty">—</span>
+                                </ng-template>
+                            </td>
+
+                            <!-- Départ (Employé) -->
+                            <td *ngIf="isEmploye">
+                                <span class="time-pill time-pill--depart" *ngIf="p.heure_depart; else noDepart">
+                                    <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                                    {{ p.heure_depart | slice:0:5 }}
+                                </span>
+                                <ng-template #noDepart>
+                                    <span class="time-pill time-pill--empty">—</span>
+                                </ng-template>
+                            </td>
+
+                            <!-- Heures (Employé) -->
+                            <td *ngIf="isEmploye">
+                                <span class="heures-cell"
+                                    *ngIf="p.heures_travaillees != null && p.heures_travaillees > 0; else noHeures">
+                                    <i class="bi bi-stopwatch" aria-hidden="true"></i>
+                                    {{ p.heures_travaillees | number:'1.1-1' }}h
+                                </span>
+                                <ng-template #noHeures>
+                                    <span class="text-faint">—</span>
+                                </ng-template>
+                            </td>
+
+                            <!-- Statut -->
+                            <td>
+                                <span class="statut-pill" [class.statut-pill--present]="p.statut === 'PRESENT'"
+                                    [class.statut-pill--absent]="p.statut === 'ABSENT'"
+                                    [class.statut-pill--retard]="p.statut === 'RETARD'">
+                                    <i class="bi" [class.bi-check-circle-fill]="p.statut === 'PRESENT'"
+                                        [class.bi-x-circle-fill]="p.statut === 'ABSENT'"
+                                        [class.bi-clock-fill]="p.statut === 'RETARD'" aria-hidden="true">
+                                    </i>
+                                    {{ p.statut_label }}
+                                </span>
+                            </td>
+
+                            <!-- Action Justification (Employé) -->
+                            <td *ngIf="isEmploye" class="action-cell">
+                                <ng-container [ngSwitch]="p.statut">
+
+                                    <!-- ABSENT -->
+                                    <ng-container *ngSwitchCase="'ABSENT'">
+                                        <button *ngIf="!p.justifie && getValidPresenceId(p)" class="btn-justifier"
+                                            (click)="ouvrirFormulaireJustificationSafe(p)"
+                                            aria-label="Justifier l'absence">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i> Justifier
+                                        </button>
+                                        <span *ngIf="p.justifie" class="text-justified">
+                                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Justifié
+                                        </span>
+                                    </ng-container>
+
+                                    <!-- RETARD -->
+                                    <ng-container *ngSwitchCase="'RETARD'">
+                                        <button *ngIf="!p.justifie && getValidPresenceId(p)" class="btn-justifier"
+                                            (click)="ouvrirFormulaireJustificationSafe(p)"
+                                            aria-label="Justifier le retard">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i> Justifier
+                                        </button>
+                                        <span *ngIf="p.justifie" class="text-justified">
+                                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Justifié
+                                        </span>
+                                    </ng-container>
+
+                                    <!-- PRÉSENT -->
+                                    <ng-container *ngSwitchCase="'PRESENT'">
+                                        <span class="text-na">—</span>
+                                    </ng-container>
+                                </ng-container>
+                            </td>
+                        </tr>
+
+                        <!-- Aucun résultat après filtrage -->
+                        <tr *ngIf="presencesFiltrees.length === 0">
+                            <td [attr.colspan]="isManager ? 7 : 6" class="empty-state">
+                                <i class="bi bi-funnel" aria-hidden="true"></i>
+                                <p>Aucun résultat pour cette recherche</p>
+                            </td>
+                        </tr>
+                    </ng-container>
+
+                    <!-- Cas : aucune donnée -->
+                    <tr *ngIf="presences.length === 0">
+                        <td [attr.colspan]="isManager ? 7 : 6" class="empty-state">
+                            <i class="bi bi-calendar-x" aria-hidden="true"></i>
+                            <p>Aucune présence enregistrée</p>
+                            <small *ngIf="isEmploye">Commencez par badger votre arrivée</small>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

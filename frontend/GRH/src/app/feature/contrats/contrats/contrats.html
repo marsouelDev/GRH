@@ -1,0 +1,412 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!--MODAL NOTIFICATION (Succès / Erreur) -->
+<div class="modal-overlay" *ngIf="successMessage || errorMessage" (click)="dismissModal()">
+    <div class="modal" [class.modal--success]="!!successMessage" [class.modal--error]="!!errorMessage"
+        (click)="$event.stopPropagation()">
+        <div class="modal__icon">
+            <i class="bi" [class.bi-check-circle-fill]="!!successMessage"
+                [class.bi-exclamation-triangle-fill]="!!errorMessage"></i>
+        </div>
+        <div class="modal__body">
+            <p class="modal__title">{{ successMessage ? 'Succès' : 'Erreur' }}</p>
+            <p class="modal__message">{{ successMessage || errorMessage }}</p>
+        </div>
+        <button class="modal__close" (click)="dismissModal()" type="button" aria-label="Fermer">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+</div>
+
+<!--  OVERLAY DE CHARGEMENT GLOBAL -->
+<div class="loading-overlay" *ngIf="chargement">
+    <div class="loading-spinner">
+        <i class="bi bi-hourglass-split spinning"></i>
+        <p>Chargement…</p>
+    </div>
+</div>
+
+<!--  VUE : LISTE DES CONTRATS-->
+<div class="page" *ngIf="modeAffichage === 'liste'">
+    <header class="header">
+        <div class="header__left">
+            <div class="header__icon"><i class="bi bi-file-earmark-text-fill"></i></div>
+            <div>
+                <h1 class="header__title">Contrats</h1>
+                <p class="header__sub">{{ contrats.length }} contrat(s) enregistré(s)</p>
+            </div>
+        </div>
+        <div class="header__actions">
+            <button class="btn btn--primary" (click)="modeAffichage = 'formulaire'" *ngIf="isRH" type="button">
+                <i class="bi bi-plus-lg"></i> Nouveau contrat
+            </button>
+        </div>
+    </header>
+
+    <!-- Statistiques -->
+    <div class="stats-grid">
+        <div class="stat-card stat-card--actif">
+            <div class="stat-card__icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="stat-card__content">
+                <span class="stat-card__value">{{ nbActifs }}</span>
+                <span class="stat-card__label">Actifs</span>
+            </div>
+            <div class="stat-card__bar" [style.--pct]="(nbActifs / (contrats.length || 1)) * 100 + '%'"></div>
+        </div>
+        <div class="stat-card stat-card--termine">
+            <div class="stat-card__icon"><i class="bi bi-x-circle-fill"></i></div>
+            <div class="stat-card__content">
+                <span class="stat-card__value">{{ nbTermines }}</span>
+                <span class="stat-card__label">Terminés</span>
+            </div>
+            <div class="stat-card__bar" [style.--pct]="(nbTermines / (contrats.length || 1)) * 100 + '%'"></div>
+        </div>
+        <div class="stat-card stat-card--suspendu">
+            <div class="stat-card__icon"><i class="bi bi-pause-circle-fill"></i></div>
+            <div class="stat-card__content">
+                <span class="stat-card__value">{{ nbSuspendus }}</span>
+                <span class="stat-card__label">Suspendus</span>
+            </div>
+            <div class="stat-card__bar" [style.--pct]="(nbSuspendus / (contrats.length || 1)) * 100 + '%'"></div>
+        </div>
+        <div class="stat-card stat-card--total">
+            <div class="stat-card__icon"><i class="bi bi-list-ul"></i></div>
+            <div class="stat-card__content">
+                <span class="stat-card__value">{{ contrats.length }}</span>
+                <span class="stat-card__label">Total</span>
+            </div>
+            <div class="stat-card__bar" style="--pct: 100%"></div>
+        </div>
+    </div>
+
+    <!-- Barre d'outils -->
+    <div class="toolbar">
+        <div class="search-box">
+            <i class="bi bi-search search-box__icon"></i>
+            <input class="search-box__input" type="search" placeholder="Rechercher par employé, type, poste…"
+                [(ngModel)]="recherche" aria-label="Rechercher" />
+            <button class="search-box__clear" *ngIf="recherche" (click)="recherche = ''" type="button"
+                aria-label="Effacer">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="toolbar__filters">
+            <button class="filter-chip" [class.filter-chip--active]="filtreStatut === ''" (click)="filtreStatut = ''"
+                type="button">
+                <i class="bi bi-grid-fill"></i> Tous <span class="filter-chip__count">{{ contrats.length }}</span>
+            </button>
+            <button class="filter-chip filter-chip--actif" [class.filter-chip--active]="filtreStatut === 'ACTIF'"
+                (click)="filtreStatut = 'ACTIF'" type="button">
+                <i class="bi bi-check-circle-fill"></i> Actifs <span class="filter-chip__count">{{ nbActifs }}</span>
+            </button>
+            <button class="filter-chip filter-chip--termine" [class.filter-chip--active]="filtreStatut === 'TERMINE'"
+                (click)="filtreStatut = 'TERMINE'" type="button">
+                <i class="bi bi-x-circle-fill"></i> Terminés <span class="filter-chip__count">{{ nbTermines }}</span>
+            </button>
+            <button class="filter-chip filter-chip--suspendu" [class.filter-chip--active]="filtreStatut === 'SUSPENDU'"
+                (click)="filtreStatut = 'SUSPENDU'" type="button">
+                <i class="bi bi-pause-circle-fill"></i> Suspendus <span class="filter-chip__count">{{ nbSuspendus
+                    }}</span>
+            </button>
+            <span class="filter-result" *ngIf="recherche || filtreStatut">
+                <i class="bi bi-funnel-fill"></i> {{ contratsFiltres.length }} résultat(s)
+            </span>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="table-card">
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Employé</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Poste</th>
+                        <th scope="col">Période</th>
+                        <th scope="col">Salaire</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <ng-container *ngIf="contrats.length > 0">
+                        <tr *ngFor="let c of contratsFiltres; trackBy: trackById"
+                            [class.row--actif]="c.statut === 'ACTIF'" [class.row--termine]="c.statut === 'TERMINE'"
+                            [class.row--suspendu]="c.statut === 'SUSPENDU'">
+                            <td>
+                                <div class="employe-cell">
+                                    <div class="avatar">{{ (c.employe_details?.nom || 'E').charAt(0).toUpperCase() }}
+                                    </div>
+                                    <div>
+                                        <div class="employe-cell__name">{{ c.employe_details?.nom || '—' }} {{
+                                            c.employe_details?.prenom ||
+                                            '' }}</div>
+                                        <div class="employe-cell__id">#{{ c.employe }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="type-pill"><i class="bi bi-tag-fill"></i> {{ c.type_contrat }}</span></td>
+
+
+                            <td><span class="poste-cell">{{ getNomPoste(c.poste_details, c.poste) }}</span></td>
+
+                            <td>
+                                <div class="periode-cell">
+                                    <span>{{ c.date_debut | date:'dd/MM/yy' }}</span>
+                                    <i class="bi bi-arrow-right"></i>
+                                    <span *ngIf="c.date_fin">{{ c.date_fin | date:'dd/MM/yy' }}</span>
+                                    <span *ngIf="!c.date_fin" class="text-faint">CDI</span>
+                                </div>
+                            </td>
+                            <td><span class="salaire-cell"><i class="bi bi-cash-stack"></i> {{ c.salaire_base |
+                                    number:'1.0-0' }}
+                                    FCFA</span></td>
+                            <td>
+                                <span class="statut-pill" [class.statut-pill--actif]="c.statut === 'ACTIF'"
+                                    [class.statut-pill--termine]="c.statut === 'TERMINE'"
+                                    [class.statut-pill--suspendu]="c.statut === 'SUSPENDU'">
+                                    <i class="bi" [class.bi-check-circle-fill]="c.statut === 'ACTIF'"
+                                        [class.bi-x-circle-fill]="c.statut === 'TERMINE'"
+                                        [class.bi-pause-circle-fill]="c.statut === 'SUSPENDU'"></i>
+                                    {{ c.statut }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn action-btn--pdf" (click)="imprimerPDF(c)"
+                                        *ngIf="isRH && c.statut === 'ACTIF'" title="Télécharger PDF" type="button">
+                                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                                    </button>
+                                    <button class="action-btn action-btn--close" (click)="demanderCloture(c)"
+                                        *ngIf="isRH && c.statut === 'ACTIF'" title="Clôturer" type="button">
+                                        <i class="bi bi-slash-circle-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr *ngIf="contratsFiltres.length === 0">
+                            <td colspan="7" class="empty-state">
+                                <i class="bi bi-funnel"></i>
+                                <p>Aucun résultat pour cette recherche</p>
+                            </td>
+                        </tr>
+                    </ng-container>
+                    <tr *ngIf="contrats.length === 0">
+                        <td colspan="7" class="empty-state">
+                            <i class="bi bi-file-earmark-x"></i>
+                            <p>Aucun contrat enregistré</p>
+                            <button class="btn btn--primary btn--sm" (click)="modeAffichage = 'formulaire'" *ngIf="isRH"
+                                type="button">
+                                <i class="bi bi-plus-lg"></i> Créer un contrat
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!--  VUE : FORMULAIRE CRÉATION -->
+<div class="page" *ngIf="modeAffichage === 'formulaire'">
+    <header class="header">
+        <div class="header__left">
+            <button class="btn-back" (click)="retourListe()" type="button" aria-label="Retour"><i
+                    class="bi bi-arrow-left"></i></button>
+            <div class="header__icon header__icon--green"><i class="bi bi-plus-circle-fill"></i></div>
+            <div>
+                <h1 class="header__title">Nouveau contrat</h1>
+                <p class="header__sub">Remplissez les informations ci-dessous</p>
+            </div>
+        </div>
+    </header>
+
+    <div *ngIf="chargementForm" class="loading-inline">
+        <i class="bi bi-hourglass-split spinning"></i>
+        <span>Chargement des listes (employés, postes)…</span>
+    </div>
+
+    <!-- Données manquantes -->
+    <div *ngIf="!chargementForm && (listeEmployes.length === 0 || listePostes.length === 0)" class="missing-data-card">
+        <div class="missing-data-card__illustration">
+            <div class="illustration-circle"><i class="bi bi-folder2-open"></i></div>
+            <div class="floating-icon floating-icon--1"><i class="bi bi-person-plus"></i></div>
+            <div class="floating-icon floating-icon--2"><i class="bi bi-briefcase-plus"></i></div>
+        </div>
+        <div class="missing-data-card__content">
+            <h3 class="missing-data-card__title">Préparation du formulaire</h3>
+            <p class="missing-data-card__subtitle">Certaines données sont nécessaires avant de pouvoir créer un contrat
+            </p>
+            <ul class="missing-data-card__list">
+                <li *ngIf="listeEmployes.length === 0" class="missing-item missing-item--warning">
+                    <div class="missing-item__icon"><i class="bi bi-person-x"></i></div>
+                    <div class="missing-item__text">
+                        <strong>Aucun employé enregistré</strong>
+                        <span>Vous devez créer au moins un employé pour lui attribuer un contrat.</span>
+                    </div>
+                    <button class="missing-item__action" (click)="allerVersEmployes()" type="button">
+                        <i class="bi bi-plus-lg"></i> Créer un employé
+                    </button>
+                </li>
+                <li *ngIf="listePostes.length === 0" class="missing-item missing-item--warning">
+                    <div class="missing-item__icon"><i class="bi bi-briefcase-x"></i></div>
+                    <div class="missing-item__text">
+                        <strong>Aucun poste enregistré</strong>
+                        <span>Vous devez définir au moins un poste avant de créer un contrat.</span>
+                    </div>
+                    <button class="missing-item__action" (click)="allerVersPostes()" type="button">
+                        <i class="bi bi-plus-lg"></i> Créer un poste
+                    </button>
+                </li>
+            </ul>
+            <div class="missing-data-card__actions">
+                <button class="btn btn--ghost" (click)="chargerDonneesFormulaire()" type="button"><i
+                        class="bi bi-arrow-clockwise"></i> Rafraîchir</button>
+                <button class="btn btn--outline" (click)="retourListe()" type="button"><i class="bi bi-arrow-left"></i>
+                    Retour à la liste</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="form-card" *ngIf="!chargementForm && listeEmployes.length > 0 && listePostes.length > 0">
+        <form #contratForm="ngForm" (ngSubmit)="soumettreContrat(contratForm)" novalidate>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label"><i class="bi bi-person-fill"></i> Employé <span
+                            class="form-label__required">*</span></label>
+                    <select class="form-input form-select" name="employe" [(ngModel)]="nouveauContrat.employe" required
+                        #employeCtrl="ngModel">
+                        <option [ngValue]="undefined" disabled selected hidden>Sélectionner un employé…</option>
+                        <option *ngFor="let e of listeEmployes; trackBy: trackById" [ngValue]="e.id">{{ e.nom }} {{
+                            e.prenom }}
+                        </option>
+                    </select>
+                    <small class="form-hint form-hint--error" *ngIf="employeCtrl.invalid && employeCtrl.touched"><i
+                            class="bi bi-x-circle-fill"></i> Sélectionnez un employé</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label"><i class="bi bi-briefcase-fill"></i> Poste <span
+                            class="form-label__required">*</span></label>
+                    <select class="form-input form-select" name="poste" [(ngModel)]="nouveauContrat.poste" required
+                        #posteCtrl="ngModel">
+                        <option [ngValue]="undefined" disabled selected hidden>Sélectionner un poste…</option>
+                        <option *ngFor="let p of listePostes; trackBy: trackById" [ngValue]="p.id">{{ p.intitule }}
+                        </option>
+                    </select>
+                    <small class="form-hint form-hint--error" *ngIf="posteCtrl.invalid && posteCtrl.touched"><i
+                            class="bi bi-x-circle-fill"></i> Sélectionnez un poste</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label"><i class="bi bi-tag-fill"></i> Type de contrat <span
+                            class="form-label__required">*</span></label>
+                    <select class="form-input form-select" name="type_contrat" [(ngModel)]="nouveauContrat.type_contrat"
+                        required>
+                        <option value="CDI">CDI — Contrat à Durée Indéterminée</option>
+                        <option value="CDD">CDD — Contrat à Durée Déterminée</option>
+                        <option value="STAGE">Stage</option>
+                        <option value="FREELANCE">Freelance</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label"><i class="bi bi-cash-stack"></i> Salaire de base (FCFA) <span
+                            class="form-label__required">*</span></label>
+                    <input class="form-input" type="number" name="salaire_base"
+                        [(ngModel)]="nouveauContrat.salaire_base" placeholder="Ex : 500000" min="0" required />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label"><i class="bi bi-calendar-event-fill"></i> Date de début <span
+                            class="form-label__required">*</span></label>
+                    <input class="form-input" type="date" name="date_debut" [(ngModel)]="nouveauContrat.date_debut"
+                        required />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-calendar-check-fill"></i> Date de fin
+                        <span class="form-label__hint" *ngIf="nouveauContrat.type_contrat === 'CDI'">(optionnelle pour
+                            CDI)</span>
+                        <span class="form-label__required"
+                            *ngIf="nouveauContrat.type_contrat !== 'CDI' && nouveauContrat.type_contrat !== 'FREELANCE'">*</span>
+                    </label>
+                    <input class="form-input" type="date" name="date_fin" [(ngModel)]="nouveauContrat.date_fin"
+                        [required]="nouveauContrat.type_contrat !== 'CDI' && nouveauContrat.type_contrat !== 'FREELANCE'" />
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn--ghost" (click)="retourListe()" [disabled]="chargement"><i
+                        class="bi bi-x-lg"></i> Annuler</button>
+                <button type="submit" class="btn btn--primary" [disabled]="contratForm.invalid || chargement"
+                    [attr.aria-busy]="chargement">
+                    <i class="bi" [class.bi-floppy-fill]="!chargement" [class.bi-hourglass-split]="chargement"></i>
+                    {{ chargement ? 'Enregistrement…' : 'Créer le contrat' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- MODAL PERSONNALISÉ : CONFIRMATION DE CLÔTURE-->
+<div class="modal-overlay" *ngIf="contratACloturer" (click)="annulerCloture()">
+    <div class="modal-confirm" (click)="$event.stopPropagation()">
+
+        <!-- En-tête avec icône -->
+        <div class="modal-confirm__head">
+            <div class="modal-confirm__ico-wrap modal-confirm__ico-wrap--warn">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            <h3 class="modal-confirm__title">Confirmer la clôture</h3>
+            <button class="modal-confirm__close" (click)="annulerCloture()" aria-label="Fermer">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <!-- Corps du message -->
+        <div class="modal-confirm__body">
+            <p class="modal-confirm__text">
+                Vous êtes sur le point de clôturer définitivement le contrat de :
+            </p>
+
+            <!-- Carte de l'employé -->
+            <div class="modal-confirm__employee">
+                <div class="modal-confirm__avatar">
+                    {{ (contratACloturer.employe_details?.nom || 'E').charAt(0).toUpperCase() }}
+                </div>
+                <div class="modal-confirm__employee-info">
+                    <strong>{{ contratACloturer.employe_details?.nom }} {{ contratACloturer.employe_details?.prenom
+                        }}</strong>
+                    <span class="modal-confirm__type">
+                        <i class="bi bi-file-earmark-text"></i>
+                        {{ contratACloturer.type_contrat }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Avertissement -->
+            <div class="modal-confirm__warning">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <span>Cette action est <strong>irréversible</strong>. Le contrat ne pourra plus être réactivé.</span>
+            </div>
+        </div>
+
+        <!-- Pied avec boutons -->
+        <div class="modal-confirm__foot">
+            <button class="btn btn--ghost" (click)="annulerCloture()" [disabled]="chargement">
+                <i class="bi bi-arrow-left"></i> Annuler
+            </button>
+            <button class="btn btn--danger" (click)="confirmerCloture()" [disabled]="chargement">
+                <span class="spin-sm" *ngIf="chargement"></span>
+                <i class="bi bi-slash-circle-fill" *ngIf="!chargement"></i>
+                {{ chargement ? 'Clôture en cours...' : 'Oui, clôturer le contrat' }}
+            </button>
+        </div>
+
+    </div>
+</div>

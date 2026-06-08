@@ -1,0 +1,515 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- ===== NOTIFICATIONS ===== -->
+<div class="notification-wrapper" *ngIf="messageNotification || messageErreur">
+    <div class="notif notif--success" *ngIf="messageNotification">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ messageNotification }}</span>
+    </div>
+    <div class="notif notif--error" *ngIf="messageErreur">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ messageErreur }}</span>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     VUE : LISTE
+     ════════════════════════════════════════════════════════════ -->
+<div class="page-wrapper" *ngIf="modeAffichage === 'liste'">
+    <div class="page-header">
+        <div class="page-header__left">
+            <div class="page-header__icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div>
+                <h1 class="page-header__title">Ressources Humaines</h1>
+                <p class="page-header__subtitle">{{ rhs.length }} membre(s) dans l'équipe RH</p>
+            </div>
+        </div>
+        <div class="header-actions">
+
+            <button class="btn btn--primary" (click)="modeAffichage = 'creation'" *ngIf="peutCreerModifier">
+                <i class="bi bi-person-plus-fill"></i> Nouveau RH
+            </button>
+        </div>
+    </div>
+
+    <!-- Barre de recherche -->
+    <div class="search-bar">
+        <div class="search-bar__input-wrap">
+            <i class="bi bi-search search-bar__icon"></i>
+            <input type="text" class="search-bar__input" placeholder="Rechercher par nom, prénom ou email…"
+                [(ngModel)]="recherche" />
+            <button class="search-bar__clear" *ngIf="recherche" (click)="recherche = ''">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="search-bar__filters">
+            <button class="filter-btn" [class.filter-btn--active]="filtreStatut === null" (click)="filtreStatut = null">
+                <i class="bi bi-people-fill"></i> Tous
+                <span class="filter-count">{{ rhs.length }}</span>
+            </button>
+            <button class="filter-btn filter-btn--actif" [class.filter-btn--active]="filtreStatut === true"
+                (click)="filtreStatut = true">
+                <i class="bi bi-circle-fill"></i> Actifs
+                <span class="filter-count">{{ nbActifs }}</span>
+            </button>
+            <button class="filter-btn filter-btn--inactif" [class.filter-btn--active]="filtreStatut === false"
+                (click)="filtreStatut = false">
+                <i class="bi bi-circle"></i> Inactifs
+                <span class="filter-count">{{ nbInactifs }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="card">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>RH</th>
+                        <th>Contact</th>
+                        <th>Date de naissance</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let rh of rhsFiltres; let i = index" [class.row--inactive]="!rh.is_active">
+                        <td class="td--index">{{ i + 1 }}</td>
+                        <td>
+                            <div class="employe-cell">
+                                <div class="avatar" [class.avatar--inactive]="!rh.is_active">
+                                    {{ rh.prenom.charAt(0).toUpperCase() }}{{ rh.nom.charAt(0).toUpperCase() }}
+                                </div>
+                                <div>
+                                    <div class="employe-name">{{ rh.prenom }} {{ rh.nom }}</div>
+                                    <div class="employe-email">{{ rh.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="td--phone">
+                                <i class="bi bi-telephone-fill"></i>
+                                {{ rh.telephone || '—' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="td--date">
+                                <i class="bi bi-calendar3"></i>
+                                {{ rh.date_naissance || '—' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge" [class.badge--active]="rh.is_active"
+                                [class.badge--inactive]="!rh.is_active">
+                                <i class="bi" [class.bi-circle-fill]="rh.is_active"
+                                    [class.bi-circle]="!rh.is_active"></i>
+                                {{ rh.is_active ? 'Actif' : 'Inactif' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <button class="action-btn action-btn--view" (click)="voirDetails(rh)" title="Voir">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                                <button class="action-btn action-btn--edit" (click)="selectionnerPourModification(rh)"
+                                    title="Modifier">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                                <button *ngIf="peutGererComptes && !rh.is_active"
+                                    class="action-btn action-btn--activate" (click)="activeCompte(rh.id!)"
+                                    title="Activer">
+                                    <i class="bi bi-toggle-off"></i>
+                                </button>
+                                <button *ngIf="peutGererComptes && rh.is_active"
+                                    class="action-btn action-btn--deactivate" (click)="desactiverCompte(rh.id!)"
+                                    title="Désactiver">
+                                    <i class="bi bi-toggle-on"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="rhsFiltres.length === 0">
+                        <td colspan="6" class="empty-state">
+                            <i class="bi bi-search"></i>
+                            <p *ngIf="recherche || filtreStatut !== null">Aucun résultat</p>
+                            <p *ngIf="!recherche && filtreStatut === null">Aucun RH enregistré</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     VUE : CRÉATION
+     ════════════════════════════════════════════════════════════ -->
+<div class="page-wrapper" *ngIf="modeAffichage === 'creation' && peutCreerModifier">
+    <div class="page-header">
+        <div class="page-header__left">
+            <button class="btn-back" (click)="retournerALaListe()">
+                <i class="bi bi-arrow-left"></i>
+            </button>
+            <div class="page-header__icon page-header__icon--green">
+                <i class="bi bi-person-plus-fill"></i>
+            </div>
+            <div>
+                <h1 class="page-header__title">Nouveau RH</h1>
+                <p class="page-header__subtitle">Un email avec identifiants sera envoyé</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card form-card">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-person-fill"></i> Prénom <span class="req">*</span></label>
+                <input type="text" class="form-input" placeholder="ex : Jean" [(ngModel)]="nouveauRh.prenom" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-person-fill"></i> Nom <span class="req">*</span></label>
+                <input type="text" class="form-input" placeholder="ex : Dupont" [(ngModel)]="nouveauRh.nom" />
+            </div>
+            <div class="form-group form-group--full">
+                <label class="form-label"><i class="bi bi-envelope-fill"></i> Email <span class="req">*</span></label>
+                <input type="email" class="form-input" placeholder="ex : jean@entreprise.com"
+                    [(ngModel)]="nouveauRh.email" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-telephone-fill"></i> Téléphone</label>
+                <input type="text" class="form-input" placeholder="ex : +237 6XX XXX XXX"
+                    [(ngModel)]="nouveauRh.telephone" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-calendar3"></i> Date de naissance</label>
+                <input type="date" class="form-input" [(ngModel)]="nouveauRh.date_naissance" />
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn--ghost" (click)="retournerALaListe()">
+                <i class="bi bi-x-lg"></i> Annuler
+            </button>
+            <button class="btn btn--primary" (click)="creerCompte()" [disabled]="chargement">
+                <i class="bi" [class.bi-floppy-fill]="!chargement" [class.bi-hourglass-split]="chargement"></i>
+                {{ chargement ? 'Création...' : 'Créer le compte' }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     VUE : MODIFICATION
+     ════════════════════════════════════════════════════════════ -->
+<div class="page-wrapper" *ngIf="modeAffichage === 'modification' && rhSelectionne">
+    <div class="page-header">
+        <div class="page-header__left">
+            <button class="btn-back" (click)="retournerALaListe()">
+                <i class="bi bi-arrow-left"></i>
+            </button>
+            <div class="page-header__icon page-header__icon--amber">
+                <i class="bi bi-pencil-fill"></i>
+            </div>
+            <div>
+                <h1 class="page-header__title">Modifier le RH</h1>
+                <p class="page-header__subtitle">{{ rhSelectionne.prenom }} {{ rhSelectionne.nom }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card form-card">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-person-fill"></i> Prénom</label>
+                <input type="text" class="form-input" [(ngModel)]="rhSelectionne.prenom" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-person-fill"></i> Nom</label>
+                <input type="text" class="form-input" [(ngModel)]="rhSelectionne.nom" />
+            </div>
+            <div class="form-group form-group--full">
+                <label class="form-label"><i class="bi bi-envelope-fill"></i> Email</label>
+                <input type="email" class="form-input" [(ngModel)]="rhSelectionne.email" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-telephone-fill"></i> Téléphone</label>
+                <input type="text" class="form-input" [(ngModel)]="rhSelectionne.telephone" />
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-calendar3"></i> Date de naissance</label>
+                <input type="date" class="form-input" [(ngModel)]="rhSelectionne.date_naissance" />
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn--ghost" (click)="retournerALaListe()">
+                <i class="bi bi-x-lg"></i> Annuler
+            </button>
+            <button class="btn btn--amber" (click)="enregistrerModification()" [disabled]="chargement">
+                <i class="bi" [class.bi-floppy-fill]="!chargement" [class.bi-hourglass-split]="chargement"></i>
+                {{ chargement ? 'Enregistrement...' : 'Enregistrer' }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     VUE : DÉTAILS
+     ════════════════════════════════════════════════════════════ -->
+<div class="page-wrapper" *ngIf="modeAffichage === 'details' && rhSelectionne">
+    <div class="page-header">
+        <div class="page-header__left">
+            <button class="btn-back" (click)="retournerALaListe()">
+                <i class="bi bi-arrow-left"></i>
+            </button>
+            <div class="page-header__icon page-header__icon--blue">
+                <i class="bi bi-person-badge-fill"></i>
+            </div>
+            <div>
+                <h1 class="page-header__title">Fiche RH</h1>
+                <p class="page-header__subtitle">Informations complètes</p>
+            </div>
+        </div>
+        <button class="btn btn--amber" (click)="selectionnerPourModification(rhSelectionne)">
+            <i class="bi bi-pencil-fill"></i> Modifier
+        </button>
+    </div>
+
+    <div class="details-layout">
+        <div class="card profile-card">
+            <div class="profile-avatar">
+                {{ rhSelectionne.prenom.charAt(0).toUpperCase() }}{{ rhSelectionne.nom.charAt(0).toUpperCase() }}
+            </div>
+            <h2 class="profile-name">{{ rhSelectionne.prenom }} {{ rhSelectionne.nom }}</h2>
+            <p class="profile-email">{{ rhSelectionne.email }}</p>
+            <span class="badge badge--lg" [class.badge--active]="rhSelectionne.is_active"
+                [class.badge--inactive]="!rhSelectionne.is_active">
+                <i class="bi" [class.bi-circle-fill]="rhSelectionne.is_active"
+                    [class.bi-circle]="!rhSelectionne.is_active"></i>
+                {{ rhSelectionne.is_active ? 'Compte actif' : 'Compte inactif' }}
+            </span>
+
+            <div class="profile-actions" *ngIf="peutGererComptes">
+                <button *ngIf="!rhSelectionne.is_active" class="btn btn--primary btn--sm"
+                    (click)="activeCompte(rhSelectionne.id!)">
+                    <i class="bi bi-toggle-off"></i> Activer
+                </button>
+                <button *ngIf="rhSelectionne.is_active" class="btn btn--danger btn--sm"
+                    (click)="desactiverCompte(rhSelectionne.id!)">
+                    <i class="bi bi-toggle-on"></i> Désactiver
+                </button>
+            </div>
+        </div>
+
+        <div class="card details-card">
+            <h3 class="section-title">
+                <i class="bi bi-info-circle-fill"></i> Informations personnelles
+            </h3>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label"><i class="bi bi-person-fill"></i> Prénom</span>
+                    <span class="detail-value">{{ rhSelectionne.prenom }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label"><i class="bi bi-person-fill"></i> Nom</span>
+                    <span class="detail-value">{{ rhSelectionne.nom }}</span>
+                </div>
+                <div class="detail-item detail-item--full">
+                    <span class="detail-label"><i class="bi bi-envelope-fill"></i> Email</span>
+                    <span class="detail-value">{{ rhSelectionne.email }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label"><i class="bi bi-telephone-fill"></i> Téléphone</span>
+                    <span class="detail-value">{{ rhSelectionne.telephone || '—' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label"><i class="bi bi-calendar3"></i> Date de naissance</span>
+                    <span class="detail-value">{{ rhSelectionne.date_naissance || '—' }}</span>
+                </div>
+                <div class="detail-item" *ngIf="rhSelectionne.role">
+                    <span class="detail-label"><i class="bi bi-shield-fill"></i> Rôle</span>
+                    <span class="detail-value">{{ rhSelectionne.role }}</span>
+                </div>
+                <div class="detail-item" *ngIf="rhSelectionne.date_joined">
+                    <span class="detail-label"><i class="bi bi-calendar-check-fill"></i> Date d'entrée</span>
+                    <span class="detail-value">{{ rhSelectionne.date_joined }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     VUE : MON PROFIL
+     ════════════════════════════════════════════════════════════ -->
+<div class="page-wrapper" *ngIf="modeAffichage === 'profil'">
+    <div class="page-header">
+        <div class="page-header__left">
+            <button class="btn-back" (click)="retournerALaListe()">
+                <i class="bi bi-arrow-left"></i>
+            </button>
+            <div class="page-header__icon page-header__icon--purple">
+                <i class="bi bi-person-circle"></i>
+            </div>
+            <div>
+                <h1 class="page-header__title">Mon profil</h1>
+                <p class="page-header__subtitle">Gérez vos informations personnelles</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ Loader pendant le chargement -->
+    <div *ngIf="chargement && !monProfil" class="profil-loading">
+        <i class="bi bi-hourglass-split spinning"></i>
+        <p>Chargement du profil...</p>
+    </div>
+
+    <!-- ✅ Message d'erreur si le profil ne peut pas être chargé -->
+    <div *ngIf="!chargement && !monProfil" class="profil-error">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <p>Impossible de charger votre profil.</p>
+        <button class="btn btn--primary" (click)="chargerMonProfil()">
+            <i class="bi bi-arrow-clockwise"></i> Réessayer
+        </button>
+    </div>
+
+    <!-- ✅ Contenu du profil -->
+    <div class="profil-layout" *ngIf="monProfil">
+        <div class="profil-sidebar">
+            <div class="card profil-avatar-card">
+                <div class="profil-avatar-wrap">
+                    <div class="profil-avatar-circle">
+                        <span class="profil-avatar-initiales">
+                            {{ monProfil.prenom.charAt(0).toUpperCase() }}{{ monProfil.nom.charAt(0).toUpperCase() }}
+                        </span>
+                    </div>
+                </div>
+                <h2 class="profil-nom">{{ monProfil.prenom }} {{ monProfil.nom }}</h2>
+                <p class="profil-email-display">{{ monProfil.email }}</p>
+                <span class="badge badge--lg" [class.badge--active]="monProfil.is_active"
+                    [class.badge--inactive]="!monProfil.is_active">
+                    <i class="bi" [class.bi-circle-fill]="monProfil.is_active"
+                        [class.bi-circle]="!monProfil.is_active"></i>
+                    {{ monProfil.is_active ? 'Compte actif' : 'Compte inactif' }}
+                </span>
+            </div>
+
+            <div class="card profil-password-card">
+                <h3 class="section-title">
+                    <i class="bi bi-shield-lock-fill"></i> Sécurité
+                </h3>
+
+                <div class="form-group" [class.form-group--error]="erreurMdp">
+                    <label class="form-label"><i class="bi bi-lock-fill"></i> Mot de passe actuel</label>
+                    <div class="input-password-wrap">
+                        <input [type]="voirMdpActuel ? 'text' : 'password'" class="form-input" placeholder="••••••••"
+                            [(ngModel)]="motDePasseActuel" />
+                        <button class="input-password-toggle" (click)="voirMdpActuel = !voirMdpActuel">
+                            <i class="bi" [class.bi-eye-fill]="!voirMdpActuel"
+                                [class.bi-eye-slash-fill]="voirMdpActuel"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label"><i class="bi bi-lock-fill"></i> Nouveau mot de passe</label>
+                    <div class="input-password-wrap">
+                        <input [type]="voirNouveauMdp ? 'text' : 'password'" class="form-input" placeholder="••••••••"
+                            [(ngModel)]="nouveauMotDePasse" />
+                        <button class="input-password-toggle" (click)="voirNouveauMdp = !voirNouveauMdp">
+                            <i class="bi" [class.bi-eye-fill]="!voirNouveauMdp"
+                                [class.bi-eye-slash-fill]="voirNouveauMdp"></i>
+                        </button>
+                    </div>
+                    <div class="password-strength" *ngIf="nouveauMotDePasse">
+                        <div class="password-strength__bars">
+                            <div class="psb" [class.psb--active]="forceMdp >= 1" [class.psb--faible]="forceMdp === 1"
+                                [class.psb--moyen]="forceMdp === 2" [class.psb--fort]="forceMdp >= 3"></div>
+                            <div class="psb" [class.psb--active]="forceMdp >= 2" [class.psb--moyen]="forceMdp === 2"
+                                [class.psb--fort]="forceMdp >= 3"></div>
+                            <div class="psb" [class.psb--active]="forceMdp >= 3" [class.psb--fort]="forceMdp >= 3">
+                            </div>
+                            <div class="psb" [class.psb--active]="forceMdp >= 4" [class.psb--fort]="forceMdp >= 4">
+                            </div>
+                        </div>
+                        <span class="password-strength__label">
+                            {{ forceMdp === 1 ? 'Faible' : forceMdp === 2 ? 'Moyen' : forceMdp >= 3 ? 'Fort' : '' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label"><i class="bi bi-lock-fill"></i> Confirmer</label>
+                    <div class="input-password-wrap">
+                        <input [type]="voirConfirmMdp ? 'text' : 'password'" class="form-input" placeholder="••••••••"
+                            [(ngModel)]="confirmMotDePasse" />
+                        <button class="input-password-toggle" (click)="voirConfirmMdp = !voirConfirmMdp">
+                            <i class="bi" [class.bi-eye-fill]="!voirConfirmMdp"
+                                [class.bi-eye-slash-fill]="voirConfirmMdp"></i>
+                        </button>
+                    </div>
+                    <p class="input-error-msg"
+                        *ngIf="nouveauMotDePasse && confirmMotDePasse && nouveauMotDePasse !== confirmMotDePasse">
+                        <i class="bi bi-exclamation-circle-fill"></i> Les mots de passe ne correspondent pas
+                    </p>
+                </div>
+
+                <p class="input-error-msg" *ngIf="erreurMdp">
+                    <i class="bi bi-exclamation-triangle-fill"></i> {{ erreurMdp }}
+                </p>
+
+                <button class="btn btn--primary btn--full" (click)="changerMotDePasse()" [disabled]="chargement">
+                    <i class="bi bi-shield-check-fill"></i> Mettre à jour
+                </button>
+            </div>
+        </div>
+
+        <div class="profil-main">
+            <div class="card form-card">
+                <div class="form-card__header">
+                    <h3 class="section-title">
+                        <i class="bi bi-person-lines-fill"></i> Informations personnelles
+                    </h3>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label"><i class="bi bi-person-fill"></i> Prénom</label>
+                        <input type="text" class="form-input" [(ngModel)]="monProfil.prenom" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="bi bi-person-fill"></i> Nom</label>
+                        <input type="text" class="form-input" [(ngModel)]="monProfil.nom" />
+                    </div>
+                    <div class="form-group form-group--full">
+                        <label class="form-label"><i class="bi bi-envelope-fill"></i> Email</label>
+                        <input type="email" class="form-input" [(ngModel)]="monProfil.email" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="bi bi-telephone-fill"></i> Téléphone</label>
+                        <input type="text" class="form-input" [(ngModel)]="monProfil.telephone" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="bi bi-calendar3"></i> Date de naissance</label>
+                        <input type="date" class="form-input" [(ngModel)]="monProfil.date_naissance" />
+                    </div>
+                </div>
+
+                <div class="form-actions form-actions--profil">
+                    <button class="btn btn--ghost" (click)="annulerModifProfil()">
+                        <i class="bi bi-x-lg"></i> Annuler
+                    </button>
+                    <button class="btn btn--purple" (click)="sauvegarderProfil()" [disabled]="chargement">
+                        <i class="bi" [class.bi-floppy-fill]="!chargement" [class.bi-hourglass-split]="chargement"></i>
+                        {{ chargement ? 'Sauvegarde...' : 'Sauvegarder' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

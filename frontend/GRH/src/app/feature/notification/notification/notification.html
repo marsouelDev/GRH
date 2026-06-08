@@ -1,0 +1,101 @@
+<div class="notif-container">
+
+    <!-- ═══════════════════════════════════════════════════════════
+        EN-TÊTE
+       ═══════════════════════════════════════════════════════════ -->
+    <header class="notif-header">
+        <h2>
+            <i class="bi bi-bell-fill" aria-hidden="true"></i>
+            Mes Notifications
+            <span *ngIf="nonLuesCount > 0" class="badge-non-lues">{{ nonLuesCount }}</span>
+        </h2>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════
+        FILTRES
+       ═══════════════════════════════════════════════════════════ -->
+    <div class="notif-actions" role="tablist" aria-label="Filtres de notifications">
+        <button role="tab" [attr.aria-selected]="filtreActuel === 'all'" (click)="changerFiltre('all')"
+            [class.active]="filtreActuel === 'all'" type="button">
+            Toutes
+        </button>
+
+        <button role="tab" [attr.aria-selected]="filtreActuel === 'false'" (click)="changerFiltre('false')"
+            [class.active]="filtreActuel === 'false'" type="button">
+            Non lues
+            <span *ngIf="nonLuesCount > 0" class="count">{{ nonLuesCount }}</span>
+        </button>
+
+        <button role="tab" [attr.aria-selected]="filtreActuel === 'true'" (click)="changerFiltre('true')"
+            [class.active]="filtreActuel === 'true'" type="button">
+            Lues
+        </button>
+
+        <button class="btn-tout-lire" (click)="toutLire()"
+            [disabled]="notifications.length === 0 || notifications.every(n => n.lu)" type="button"
+            aria-label="Marquer toutes les notifications comme lues">
+            <i class="bi bi-check-all" aria-hidden="true"></i> Tout lire
+        </button>
+    </div>
+
+    <!--CHARGEMENT -->
+    <div *ngIf="chargement" class="loading" role="status">
+        <i class="bi bi-hourglass-split spinning" aria-hidden="true"></i>
+        <span>Chargement des notifications…</span>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+        LISTE DES NOTIFICATIONS
+       ═══════════════════════════════════════════════════════════ -->
+    <ul *ngIf="!chargement" class="notif-list" aria-live="polite">
+
+        <!-- État vide -->
+        <li *ngIf="notifications.length === 0" class="no-notif">
+            <i class="bi bi-bell-slash" aria-hidden="true"></i>
+            <p>Aucune notification.</p>
+        </li>
+
+        <!-- Items -->
+        <li *ngFor="let notif of notifications; trackBy: trackById" [class.non-lue]="!notif.lu" class="notif-item"
+            [attr.aria-label]="notif.titre">
+
+            <div class="notif-content">
+
+                <!-- Badge type -->
+                <span class="badge" [ngClass]="getBadgeClass(notif.type_notif)">
+                    {{ notif.type_label }}
+                </span>
+
+                <!-- Titre -->
+                <h3>{{ notif.titre }}</h3>
+
+                <!-- Message -->
+                <p>{{ notif.message }}</p>
+
+                <!-- Date formatée -->
+                <span class="date" [attr.title]="notif.date_envoi">
+                    <i class="bi bi-clock" aria-hidden="true"></i>
+                    {{ asDate(notif.date_envoi) | date:'dd/MM/yyyy HH:mm' }}
+                </span>
+
+                <!-- Lien optionnel -->
+                <div *ngIf="notif.lien" class="notif-link">
+                    <a [routerLink]="notif.lien" class="btn-detail">
+                        <i class="bi bi-arrow-right" aria-hidden="true"></i> Voir le détail
+                    </a>
+                </div>
+            </div>
+
+            <!-- Bouton "lu" -->
+            <button *ngIf="!notif.lu" (click)="lireUne(notif.id)" class="btn-check" title="Marquer comme lue"
+                aria-label="Marquer la notification comme lue" type="button">
+                <i class="bi bi-check-lg" aria-hidden="true"></i>
+            </button>
+
+            <!-- Indicateur "déjà lue" -->
+            <span *ngIf="notif.lu" class="lu-indicator" aria-label="Déjà lue">
+                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+            </span>
+        </li>
+    </ul>
+</div>

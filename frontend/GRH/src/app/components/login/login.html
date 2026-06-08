@@ -1,25 +1,77 @@
-<div class="login-container">
-  <h2>Connexion RH</h2>
-  
-  <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+<div class="login-page d-flex align-items-center justify-content-center min-vh-100">
+  <div class="card login-card border-0 shadow-lg overflow-hidden">
+    <div class="row g-0 row-equal">
 
-  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-    <div class="form-group">
-      <label for="email">Adresse Email :</label>
-      <input id="email" type="email" formControlName="email">
-      <small *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid" class="text-danger">
-        Veuillez entrer un email valide.
-      </small>
+      <!-- Colonne Gauche : Présentation RH (Bleu Foncé) -->
+      <div class="col-md-5 bg-dark-blue d-flex flex-column justify-content-center p-5 text-white">
+        <div class="logo-icon mb-4">
+          <i class="bi bi-people-fill fs-2"></i>
+        </div>
+        <h2 class="fw-bold mb-3 lh-sm">Système de Gestion<br>des Ressources Humaines</h2>
+        <p class="text-white-50 small mb-0">
+          Plateforme centralisée d'administration du personnel pour l'entreprise. Gérez les dossiers des employés, le
+          suivi des salaires et les habilitations d'accès depuis un espace sécurisé.
+        </p>
+      </div>
+
+      <!-- Colonne Droite : Formulaire de connexion (Blanc) -->
+      <div class="col-md-7 bg-white d-flex flex-column justify-content-center p-5">
+        <div class="form-container">
+          <h3 class="fw-bold text-dark mb-1">Espace Connexion</h3>
+          <p class="text-muted small mb-4">Bienvenue, veuillez vous connecter à votre compte</p>
+
+          <!-- Bannière d'erreur -->
+          <div *ngIf="errorMessage" class="alert alert-danger py-2 small mb-3" role="alert">
+            {{ errorMessage }}
+          </div>
+
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+
+            <div class="mb-3">
+              <label for="email" class="form-label text-secondary fw-semibold custom-label">ADRESSE EMAIL</label>
+              <input id="email" type="email" formControlName="email" class="form-control custom-input"
+                placeholder="Ex: jeanFosto@gmail.com">
+              <small *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
+                class="text-danger small-error">
+                Veuillez entrer une adresse email valide.
+              </small>
+            </div>
+
+            <!-- Champ Mot de passe avec icône d'Œil -->
+            <div class="mb-4">
+              <label for="password" class="form-label text-secondary fw-semibold custom-label">MOT DE PASSE</label>
+              <div class="position-relative">
+                <input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
+                  class="form-control custom-input pe-5" placeholder="••••••••">
+
+                <!-- Icône Œil cliquable -->
+                <span class="password-toggle-icon position-absolute top-50 end-0 translate-middle-y me-3"
+                  (click)="togglePasswordVisibility()">
+                  <i class="bi" [class.bi-eye-fill]="!showPassword" [class.bi-eye-slash-fill]="showPassword"></i>
+                </span>
+              </div>
+              <small *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
+                class="text-danger small-error">
+                Le mot de passe est obligatoire.
+              </small>
+            </div>
+
+            <!-- Bouton de connexion avec indicateur de Chargement -->
+            <button type="submit" [disabled]="loginForm.invalid || isLoading"
+              class="btn btn-dark-blue w-100 fw-semibold text-white py-2 mb-4 btn-signin shadow-sm d-flex align-items-center justify-content-center">
+
+              <div *ngIf="isLoading" class="spinner-border spinner-border-sm text-light me-2" role="status"></div>
+
+              <span>{{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}</span>
+            </button>
+          </form>
+
+          <p class="text-center text-muted copyright-text mb-0">
+            © 2026 Plateforme GRH. Tous droits réservés.
+          </p>
+        </div>
+      </div>
+
     </div>
-
-    <div class="form-group">
-      <label for="password">Mot de passe :</label>
-      <input id="password" type="password" formControlName="password">
-      <small *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid" class="text-danger">
-        Le mot de passe est obligatoire.
-      </small>
-    </div>
-
-    <button type="submit" [disabled]="loginForm.invalid">Se connecter</button>
-  </form>
+  </div>
 </div>

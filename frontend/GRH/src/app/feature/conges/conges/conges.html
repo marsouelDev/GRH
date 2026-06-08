@@ -1,0 +1,353 @@
+<!-- conges.html -->
+<!-- 
+  SETUP REQUIS dans index.html :
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+-->
+
+<div class="cw" [class.cw--dark]="isDarkMode">
+
+  <!-- ══════════════════════════════════════════
+       TOASTS
+  ════════════════════════════════════════════ -->
+  <div class="toast-zone">
+    <div class="toast toast--ok" *ngIf="message">
+      <i class="bi bi-check-circle-fill"></i>{{ message }}
+    </div>
+    <div class="toast toast--err" *ngIf="errorMessage">
+      <i class="bi bi-exclamation-triangle-fill"></i>{{ errorMessage }}
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       HEADER
+  ════════════════════════════════════════════ -->
+  <header class="cw-header">
+    <div class="cw-header__left">
+      <div class="cw-header__icon">
+        <i class="bi bi-calendar2-week-fill"></i>
+      </div>
+      <div>
+        <h1 class="cw-header__title">Gestion des Congés</h1>
+        <p class="cw-header__sub">
+          Bonjour, <strong>{{ nomAffiche }}</strong>
+          <span class="role-pill">{{ isManager ? 'Responsable RH' : 'Employé' }}</span>
+        </p>
+      </div>
+    </div>
+    <div class="cw-header__actions" *ngIf="modeAffichage === 'liste'">
+      <button class="btn btn--primary" *ngIf="isEmploye" (click)="modeAffichage = 'creation'">
+        <i class="bi bi-plus-lg"></i> Nouvelle demande
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════
+       VUE LISTE
+  ════════════════════════════════════════════ -->
+  <ng-container *ngIf="modeAffichage === 'liste'">
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat stat--warn">
+        <div class="stat__ico"><i class="bi bi-hourglass-split"></i></div>
+        <div class="stat__body">
+          <span class="stat__val">{{ nbEnAttente }}</span>
+          <span class="stat__lbl">En attente</span>
+        </div>
+      </div>
+      <div class="stat stat--ok">
+        <div class="stat__ico"><i class="bi bi-check2-circle"></i></div>
+        <div class="stat__body">
+          <span class="stat__val">{{ nbApprouves }}</span>
+          <span class="stat__lbl">Approuvés</span>
+        </div>
+      </div>
+      <div class="stat stat--err">
+        <div class="stat__ico"><i class="bi bi-x-circle"></i></div>
+        <div class="stat__body">
+          <span class="stat__val">{{ nbRefuses }}</span>
+          <span class="stat__lbl">Refusés</span>
+        </div>
+      </div>
+      <div class="stat stat--grey">
+        <div class="stat__ico"><i class="bi bi-slash-circle"></i></div>
+        <div class="stat__body">
+          <span class="stat__val">{{ nbAnnules }}</span>
+          <span class="stat__lbl">Annulés</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters">
+      <label class="filters__search">
+        <i class="bi bi-search"></i>
+        <input type="text" [(ngModel)]="recherche" placeholder="Rechercher par nom, motif, type…" />
+      </label>
+      <label class="filters__select">
+        <i class="bi bi-funnel"></i>
+        <select [(ngModel)]="filtreStatut" (ngModelChange)="loadConges()">
+          <option value="">Tous les statuts</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="APPROUVE">Approuvé</option>
+          <option value="REFUSE">Refusé</option>
+          <option value="ANNULE">Annulé</option>
+        </select>
+        <i class="bi bi-chevron-down filters__chevron"></i>
+      </label>
+    </div>
+
+    <!-- Chargement -->
+    <div class="loader" *ngIf="chargement">
+      <div class="loader__spin"></div>
+      <span>Chargement…</span>
+    </div>
+
+    <!-- Tableau -->
+    <div class="table-card" *ngIf="!chargement">
+      <div class="table-empty" *ngIf="congesFiltres.length === 0">
+        <i class="bi bi-inbox"></i>
+        <p>Aucune demande trouvée.</p>
+      </div>
+      <div class="table-scroll" *ngIf="congesFiltres.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th *ngIf="isManager">Employé</th>
+              <th>Type</th>
+              <th>Début</th>
+              <th>Fin</th>
+              <th>Motif</th>
+              <th>Statut</th>
+              <th class="t-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of congesFiltres">
+              <td *ngIf="isManager">
+                <div class="emp-cell">
+                  <div class="avatar">{{ (c.employe_nom || '?')[0] | uppercase }}</div>
+                  <span>{{ c.employe_nom }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="tag"><i class="bi bi-tag"></i>{{ c.type_label || c.type_conge }}</span>
+              </td>
+              <td class="date-cell"><i class="bi bi-calendar-event"></i>{{ c.date_debut }}</td>
+              <td class="date-cell"><i class="bi bi-calendar-check"></i>{{ c.date_fin }}</td>
+              <td class="motif-cell" [title]="c.motif || ''">{{ tronquerMotif(c.motif) }}</td>
+              <td>
+                <span class="badge" [class.badge--warn]="c.statut === 'EN_ATTENTE'"
+                  [class.badge--ok]="c.statut === 'APPROUVE'" [class.badge--err]="c.statut === 'REFUSE'"
+                  [class.badge--grey]="c.statut === 'ANNULE'">
+                  <i class="bi" [class.bi-hourglass-split]="c.statut === 'EN_ATTENTE'"
+                    [class.bi-check-circle-fill]="c.statut === 'APPROUVE'"
+                    [class.bi-x-circle-fill]="c.statut === 'REFUSE'"
+                    [class.bi-slash-circle-fill]="c.statut === 'ANNULE'">
+                  </i>
+                  {{ c.statut === 'EN_ATTENTE' ? 'En attente'
+                  : c.statut === 'APPROUVE' ? 'Approuvé'
+                  : c.statut === 'REFUSE' ? 'Refusé'
+                  : 'Annulé' }}
+                </span>
+              </td>
+              <td class="t-right actions-td">
+                <button class="ico-btn ico-view" title="Détail" (click)="voirDetail(c)"><i
+                    class="bi bi-eye"></i></button>
+                <button class="ico-btn ico-edit" title="Modifier" *ngIf="peutModifier(c)"
+                  (click)="ouvrirModification(c)"><i class="bi bi-pencil"></i></button>
+                <button class="ico-btn ico-cancel" title="Annuler" *ngIf="peutAnnuler(c)"
+                  (click)="demanderAnnulation(c.id!)"><i class="bi bi-slash-circle"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════════════════════════════════
+       FORMULAIRE (création / modification)
+  ════════════════════════════════════════════ -->
+  <ng-container *ngIf="modeAffichage === 'creation' || modeAffichage === 'modification'">
+    <div class="form-card">
+      <div class="form-card__head">
+        <div class="form-card__ico">
+          <i class="bi" [class.bi-plus-circle-fill]="modeAffichage === 'creation'"
+            [class.bi-pencil-fill]="modeAffichage === 'modification'">
+          </i>
+        </div>
+        <h2>{{ modeAffichage === 'creation' ? 'Nouvelle demande de congé' : 'Modifier la demande' }}</h2>
+      </div>
+
+      <div class="form-card__body">
+        <div class="field">
+          <label><i class="bi bi-tag-fill"></i> Type de congé</label>
+          <div class="sel-wrap">
+            <select [(ngModel)]="formulaire.type_conge">
+              <option *ngFor="let t of typesConge" [value]="t.value">{{ t.label }}</option>
+            </select>
+            <i class="bi bi-chevron-down sel-arrow"></i>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label><i class="bi bi-calendar-event-fill"></i> Date de début</label>
+            <input type="date" [(ngModel)]="formulaire.date_debut" />
+          </div>
+          <div class="field">
+            <label><i class="bi bi-calendar-check-fill"></i> Date de fin</label>
+            <input type="date" [(ngModel)]="formulaire.date_fin" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label><i class="bi bi-chat-left-text-fill"></i> Motif <span class="opt">(optionnel)</span></label>
+          <textarea [(ngModel)]="formulaire.motif" rows="4" placeholder="Décrivez brièvement le motif…"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn--ghost" (click)="retourListe()">
+            <i class="bi bi-arrow-left"></i> Retour
+          </button>
+          <button class="btn btn--primary" [disabled]="chargement"
+            (click)="modeAffichage === 'creation' ? creerConge() : sauvegarderModification()">
+            <span class="spin-sm" *ngIf="chargement"></span>
+            <i class="bi bi-send-fill" *ngIf="!chargement"></i>
+            {{ chargement ? 'En cours…' : modeAffichage === 'creation' ? 'Soumettre' : 'Enregistrer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════════════════════════════════
+       DÉTAIL
+  ════════════════════════════════════════════ -->
+  <ng-container *ngIf="modeAffichage === 'detail' && congeSelectionne">
+    <div class="detail-card">
+      <div class="detail-card__head">
+        <button class="btn btn--ghost" (click)="retourListe()">
+          <i class="bi bi-arrow-left"></i> Retour
+        </button>
+        <span class="badge" [class.badge--warn]="congeSelectionne.statut === 'EN_ATTENTE'"
+          [class.badge--ok]="congeSelectionne.statut === 'APPROUVE'"
+          [class.badge--err]="congeSelectionne.statut === 'REFUSE'"
+          [class.badge--grey]="congeSelectionne.statut === 'ANNULE'">
+          {{ congeSelectionne.statut === 'EN_ATTENTE' ? 'En attente'
+          : congeSelectionne.statut === 'APPROUVE' ? 'Approuvé'
+          : congeSelectionne.statut === 'REFUSE' ? 'Refusé'
+          : 'Annulé' }}
+        </span>
+      </div>
+
+      <div class="detail-card__body">
+        <div class="detail-grid">
+          <div class="ditem" *ngIf="isManager">
+            <span class="ditem__lbl"><i class="bi bi-person-fill"></i> Employé</span>
+            <span class="ditem__val">{{ congeSelectionne.employe_nom || '—' }}</span>
+          </div>
+          <div class="ditem">
+            <span class="ditem__lbl"><i class="bi bi-tag-fill"></i> Type</span>
+            <span class="ditem__val">{{ congeSelectionne.type_label || congeSelectionne.type_conge }}</span>
+          </div>
+          <div class="ditem">
+            <span class="ditem__lbl"><i class="bi bi-calendar-event-fill"></i> Début</span>
+            <span class="ditem__val">{{ congeSelectionne.date_debut }}</span>
+          </div>
+          <div class="ditem">
+            <span class="ditem__lbl"><i class="bi bi-calendar-check-fill"></i> Fin</span>
+            <span class="ditem__val">{{ congeSelectionne.date_fin }}</span>
+          </div>
+          <div class="ditem ditem--full">
+            <span class="ditem__lbl"><i class="bi bi-chat-left-text-fill"></i> Motif</span>
+            <span class="ditem__val">{{ congeSelectionne.motif || '—' }}</span>
+          </div>
+          <div class="ditem ditem--full refus-block" *ngIf="congeSelectionne.commentaire_refus">
+            <span class="ditem__lbl ditem__lbl--err"><i class="bi bi-exclamation-triangle-fill"></i> Motif de
+              refus</span>
+            <span class="ditem__val ditem__val--err">{{ congeSelectionne.commentaire_refus }}</span>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button class="btn btn--ghost" *ngIf="peutModifier(congeSelectionne)"
+            (click)="ouvrirModification(congeSelectionne)">
+            <i class="bi bi-pencil"></i> Modifier
+          </button>
+          <button class="btn btn--success" *ngIf="isRH && congeSelectionne.statut === 'EN_ATTENTE'"
+            (click)="demanderApprobation(congeSelectionne.id!)">
+            <i class="bi bi-check-lg"></i> Approuver
+          </button>
+          <button class="btn btn--danger-o" *ngIf="isRH && congeSelectionne.statut === 'EN_ATTENTE'"
+            (click)="ouvrirModalRefus(congeSelectionne.id!)">
+            <i class="bi bi-x-lg"></i> Refuser
+          </button>
+          <button class="btn btn--warn-o" *ngIf="peutAnnuler(congeSelectionne)"
+            (click)="demanderAnnulation(congeSelectionne.id!)">
+            <i class="bi bi-slash-circle"></i> Annuler la demande
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ══════════════════════════════════════════
+       MODAL REFUS
+  ════════════════════════════════════════════ -->
+  <div class="overlay" *ngIf="afficherModalRefus" (click)="annulerModalRefus()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__head modal__head--err">
+        <i class="bi bi-x-circle-fill"></i>
+        <h3>Refuser la demande</h3>
+        <button class="modal__close" (click)="annulerModalRefus()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal__body">
+        <label><i class="bi bi-chat-left-text-fill"></i> Commentaire <span class="opt">(optionnel)</span></label>
+        <textarea [(ngModel)]="commentaireRefus" rows="4" placeholder="Motif du refus…"></textarea>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="annulerModalRefus()"><i class="bi bi-arrow-left"></i> Annuler</button>
+        <button class="btn btn--danger" [disabled]="chargement" (click)="confirmerRefus()">
+          <span class="spin-sm" *ngIf="chargement"></span>
+          <i class="bi bi-x-circle" *ngIf="!chargement"></i>
+          {{ chargement ? 'En cours…' : 'Confirmer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       MODAL CONFIRMATION
+  ════════════════════════════════════════════ -->
+  <div class="overlay" *ngIf="afficherModalConfirmation" (click)="fermerModalConfirmation()">
+    <div class="modal" (click)="$event.stopPropagation()" *ngIf="modalConfirmationConfig">
+      <div class="modal__head" [class.modal__head--ok]="modalConfirmationConfig.type === 'success'"
+        [class.modal__head--warn]="modalConfirmationConfig.type === 'warning'"
+        [class.modal__head--err]="modalConfirmationConfig.type === 'danger'">
+        <i class="bi" [class.bi-check-circle-fill]="modalConfirmationConfig.type === 'success'"
+          [class.bi-exclamation-triangle-fill]="modalConfirmationConfig.type === 'warning'"
+          [class.bi-x-circle-fill]="modalConfirmationConfig.type === 'danger'">
+        </i>
+        <h3>{{ modalConfirmationConfig.titre }}</h3>
+        <button class="modal__close" (click)="fermerModalConfirmation()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal__body">
+        <p class="modal__msg">{{ modalConfirmationConfig.message }}</p>
+      </div>
+      <div class="modal__foot">
+        <button class="btn btn--ghost" (click)="fermerModalConfirmation()"><i class="bi bi-arrow-left"></i>
+          Annuler</button>
+        <button class="btn" [class.btn--success]="modalConfirmationConfig.type === 'success'"
+          [class.btn--warn]="modalConfirmationConfig.type === 'warning'"
+          [class.btn--danger]="modalConfirmationConfig.type === 'danger'" [disabled]="chargement"
+          (click)="confirmerAction()">
+          <i class="bi bi-check-lg"></i> Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

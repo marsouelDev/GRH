@@ -34,7 +34,7 @@ class RHListCreateAPIView(APIView):
             mot_de_passe = generer_mot_de_passe()
             rh = serializer.save(password=mot_de_passe)
             
-            login_url = "http://localhost:4200/login"
+            login_url = "https://gestion-culqxqs4x-marsouel-s-projects.vercel.app/login"
             role_texte = rh.get_role_display() if hasattr(rh, 'get_role_display') else str(rh.role)
             
             if rh.role == 'RH':

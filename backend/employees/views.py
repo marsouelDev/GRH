@@ -45,7 +45,7 @@ class EmployeListCreateAPIView(APIView):
             employe = serializer.save()
 
             sujet = "Votre compte dans notre plateforme "
-            login_url = "http://localhost:4200/login"
+            login_url = "https://gestion-culqxqs4x-marsouel-s-projects.vercel.app/login"
             
             # Extraction du rôle au format texte propre
             role_texte = employe.get_role_display() if hasattr(employe, 'get_role_display') else str(employe.role)

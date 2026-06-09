@@ -94,8 +94,8 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
+    "https://gestion-culqxqs4x-marsouel-s-projects.vercel.app",
     "http://localhost:4200",
-    "http://127.0.0.1:4200",
    
 ]
 

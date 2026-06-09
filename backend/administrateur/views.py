@@ -42,7 +42,7 @@ class AdministrateurListCreateAPIView(APIView):
             mot_de_passe = generer_mot_de_passe()
             admin = serializer.save(password=mot_de_passe)
 
-            login_url = "http://localhost:4200/login"
+            login_url = "https://gestion-culqxqs4x-marsouel-s-projects.vercel.app/login"
             role_texte = admin.get_role_display() if hasattr(admin, 'get_role_display') else str(admin.role)
 
             if admin.role == 'ADMIN':

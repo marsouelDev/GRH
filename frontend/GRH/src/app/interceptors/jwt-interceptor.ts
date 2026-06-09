@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
 
-const REFRESH_URL = 'http://localhost:8000/api/refresh/';
+const REFRESH_URL = 'https://workflow-u1mk.onrender.com/api/refresh/';
 
 // ───────────────── TYPES ─────────────────
 interface JetonJwt {

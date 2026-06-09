@@ -9,7 +9,7 @@ import { EmployesStats, DashboardStats } from '../../models/analytics';
 export class Dashboard {
   @Injectable({ providedIn: 'root' })
   private http = inject(HttpClient);
-  private apiUrl = 'http://127.0.0.1:8000';
+  private apiUrl = 'https://workflow-u1mk.onrender.com';
 
   /** Récupère toutes les stats du dashboard RH/Admin */
   getDashboardStats(): Observable<DashboardStats> {

@@ -8,7 +8,7 @@ import { EmployeModels } from '../../models/employe';
 })
 export class EmployeeService {
 
-  private apiUrl = 'http://localhost:8000/employes';
+  private apiUrl = 'https://workflow-u1mk.onrender.com/employes';
 
   constructor(private http: HttpClient) {}
 

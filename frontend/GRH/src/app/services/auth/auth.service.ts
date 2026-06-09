@@ -36,7 +36,7 @@ const CLE = {
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly apiUrl = 'http://localhost:8000/api';
+  private readonly apiUrl = 'https://workflow-u1mk.onrender.com/api';
   private router = inject(Router);
   private http = inject(HttpClient);
 

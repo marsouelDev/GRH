@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "dist/GRH/browser",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

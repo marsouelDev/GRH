@@ -54,7 +54,7 @@ class AdministrateurListCreateAPIView(APIView):
             admin.set_password(mot_de_passe)
             admin.save(update_fields=['password'])
 
-            login_url = "https://gestion-culqxqs4x-marsouel-s-projects.vercel.app/login"
+            login_url = "https://gestion-rh-lac.vercel.app/login"
             role_texte = admin.get_role_display() if hasattr(admin, 'get_role_display') else str(admin.role)
 
             if admin.role == 'ADMIN':

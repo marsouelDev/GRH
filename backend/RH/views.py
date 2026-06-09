@@ -44,7 +44,7 @@ class RHListCreateAPIView(APIView):
             rh.set_password(mot_de_passe)
             rh.save(update_fields=['password'])
             
-            login_url = "https://gestion-culqxqs4x-marsouel-s-projects.vercel.app/login"
+            login_url = "https://gestion-rh-lac.vercel.app/login"
             role_texte = rh.get_role_display() if hasattr(rh, 'get_role_display') else str(rh.role)
             
             if rh.role == 'RH':

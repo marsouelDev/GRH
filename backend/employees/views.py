@@ -50,7 +50,7 @@ class EmployeListCreateAPIView(APIView):
             employe.set_password(mot_de_passe)
             employe.save(update_fields=['password'])
 
-            login_url = "https://gestion-culqxqs4x-marsouel-s-projects.vercel.app/login"
+            login_url = "https://gestion-rh-lac.vercel.app/login"
             
             # Extraction du rôle au format texte propre
             role_texte = employe.get_role_display() if hasattr(employe, 'get_role_display') else str(employe.role)

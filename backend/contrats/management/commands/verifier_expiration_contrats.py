@@ -1,10 +1,9 @@
 from datetime import date, timedelta
 from django.core.management.base import BaseCommand
-from django.core.mail import send_mail
-from django.conf import settings
 from contrats.models import Contrat
 from contrats.services import notifier_rh_sur_contrat_expiration
 from RH.models import RH
+from GRH.utils import envoyer_email_brevo
 
 
 class Command(BaseCommand):
@@ -23,7 +22,7 @@ class Command(BaseCommand):
         aujourdhui = date.today()
         date_limite = aujourdhui + timedelta(days=jours_alerte)
         
-        self.stdout.write(f" Vérification des contrats expirant avant le {date_limite}...")
+        self.stdout.write(f"🔍 Vérification des contrats expirant avant le {date_limite}...")
         
         # 1) Contrats ACTIFS qui expirent dans les N prochains jours
         contrats_expirants = Contrat.objects.filter(
@@ -48,32 +47,31 @@ class Command(BaseCommand):
         
         # Notifier pour les contrats expirant bientôt
         for contrat in contrats_expirants:
-            self.stdout.write(f"    Alerte pour {contrat.employe.nom} (expire le {contrat.date_fin})")
+            self.stdout.write(f"     Alerte pour {contrat.employe.nom} (expire le {contrat.date_fin})")
             notifier_rh_sur_contrat_expiration(contrat)
             compteur += 1
         
         # Notifier pour les contrats déjà expirés
         for contrat in contrats_expires:
-            self.stdout.write(f"   Contrat EXPIRÉ : {contrat.employe.nom} (expiré le {contrat.date_fin})")
+            self.stdout.write(f"Contrat EXPIRÉ : {contrat.employe.nom} (expiré le {contrat.date_fin})")
             notifier_rh_sur_contrat_expiration(contrat)
             compteur += 1
         
         # Envoyer un email récapitulatif à tous les RH
         if total > 0:
-            self._envoyer_recap_email(total, nb_expirants, nb_expires)
-        
-        self.stdout.write(self.style.SUCCESS(f"\n✨ {compteur} notification(s) envoyée(s) à tous les RH"))
+            nb_envoyes = self._envoyer_recap_email(total, nb_expirants, nb_expires)
+            self.stdout.write(self.style.SUCCESS(f"\n✨ {compteur} notification(s) individuelle(s) envoyée(s)"))
+            self.stdout.write(self.style.SUCCESS(f"📧 Email récapitulatif envoyé à {nb_envoyes} RH"))
+        else:
+            self.stdout.write(self.style.SUCCESS(f"\n✅ Aucun contrat nécessitant une attention"))
     
     def _envoyer_recap_email(self, total, nb_expirants, nb_expires):
-        """Envoie un email récapitulatif HTML stylisé à tous les RH"""
+        """Envoie un email récapitulatif HTML stylisé à tous les RH via l'API HTTP Brevo"""
         rhs = RH.objects.filter(is_active=True)
-        emails = [rh.email for rh in rhs if rh.email]
         
-        if not emails:
-            return
-        
-        frontend_url = "http://localhost:4200"
-        sujet = f"[RH_Manager]  {total} contrat(s) nécessitent votre attention"
+        # URL correcte du frontend Vercel
+        frontend_url = "https://gestion-rh-lac.vercel.app"
+        sujet = f"[RH_Manager] {total} contrat(s) nécessitent votre attention"
         
         # Version texte brut (fallback)
         message = (
@@ -164,15 +162,24 @@ class Command(BaseCommand):
         </html>
         '''
         
-        try:
-            send_mail(
-                subject=sujet,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=emails,
-                html_message=html_message,
-                fail_silently=True
+        # Envoi à chaque RH individuellement via l'API HTTP Brevo
+        nb_envoyes = 0
+        for rh in rhs:
+            if not rh.email:
+                continue
+            
+            success = envoyer_email_brevo(
+                destinataire_email=rh.email,
+                destinataire_nom=rh.nom,
+                sujet=sujet,
+                message_html=html_message,
+                message_texte=message
             )
-            self.stdout.write(self.style.SUCCESS(f"    Email récapitulatif envoyé à {len(emails)} RH"))
-        except Exception as e:
-            self.stderr.write(self.style.ERROR(f"    Erreur envoi email: {e}"))
+            
+            if success:
+                nb_envoyes += 1
+                self.stdout.write(self.style.SUCCESS(f"  Email envoyé à {rh.email}"))
+            else:
+                self.stderr.write(self.style.ERROR(f"  Échec envoi à {rh.email}"))
+        
+        return nb_envoyes

@@ -7,8 +7,8 @@ django.setup()
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
-email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@admin.com')
-password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'admin123')
+email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'fmarsouel@gmail.com')
+password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'Max67172..')
 nom = os.environ.get('DJANGO_SUPERUSER_NOM', 'Admin')
 prenom = os.environ.get('DJANGO_SUPERUSER_PRENOM', 'Super')
 

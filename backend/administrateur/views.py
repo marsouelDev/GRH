@@ -6,13 +6,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-from django.core.mail import send_mail
 from django.conf import settings
 from drf_spectacular.utils import extend_schema
 
 from .models import Administrateur
 from .serializers import AdministrateurSerializer, ChangeAdminSerializer
 from .permissions import IsAdminUserRole
+from GRH.utils import envoyer_email_brevo
 
 logger = logging.getLogger(__name__)
 
@@ -119,19 +119,14 @@ Veuillez vous connecter pour modifier votre mot de passe : {login_url}"""
             </html>
             """
 
-            email_envoye = True
-            try:
-                send_mail(
-                    sujet, 
-                    message_simple, 
-                    settings.DEFAULT_FROM_EMAIL, 
-                    [admin.email], # ou admin.email / employe.email
-                    fail_silently=False, 
-                    html_message=html_message
-                )
-            except Exception as e:
-                email_envoye = False
-                logger.error(f" Erreur envoi email pour {admin.email} : {e}")
+            # Envoi via l'API HTTP Brevo (contourne le blocage SMTP de Render)
+            email_envoye = envoyer_email_brevo(
+                destinataire_email=admin.email,
+                destinataire_nom=admin.nom,
+                sujet=sujet,
+                message_html=html_message,
+                message_texte=message_simple
+            )
 
             response_data = serializer.data
             if email_envoye:
@@ -141,6 +136,69 @@ Veuillez vous connecter pour modifier votre mot de passe : {login_url}"""
 
             return Response(response_data, status=status.HTTP_201_CREATED)
 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdministrateurDetailUpdateDeleteAPIView(APIView):
+    permission_classes = [IsAdminUserRole]
+
+    def get_object(self, id):
+        try:
+            return Administrateur.objects.get(id=id)
+        except Administrateur.DoesNotExist:
+            return None
+
+    @extend_schema(summary="Détail d'un admin", responses=AdministrateurSerializer)
+    def get(self, request, id):
+        admin = self.get_object(id)
+        if not admin:
+            return Response({"detail": "Administrateur introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = AdministrateurSerializer(admin)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(summary="Modifier un admin", request=AdministrateurSerializer, responses=AdministrateurSerializer)
+    def put(self, request, id):
+        admin = self.get_object(id)
+        if not admin:
+            return Response({"detail": "Administrateur introuvable."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = AdministrateurSerializer(admin, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        admin = self.get_object(id)
+        if not admin:
+            return Response({"detail": "Administrateur introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        admin.delete()
+        return Response({"detail": "Administrateur supprimé."}, status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminChangeProfilAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, id):
+        try:
+            return Administrateur.objects.get(id=id)
+        except Administrateur.DoesNotExist:
+            return None
+
+    @extend_schema(summary="Modifier son propre profil", request=ChangeAdminSerializer, responses=ChangeAdminSerializer)
+    def put(self, request, id):
+        admin = self.get_object(id)
+        if not admin:
+            return Response({"detail": "Administrateur introuvable."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Seul l'admin lui-même ou un super-admin peut modifier
+        if request.user.id != admin.id and request.user.role not in ['ADMIN']:
+            return Response({"detail": "Accès interdit."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ChangeAdminSerializer(admin, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

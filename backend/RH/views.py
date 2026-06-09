@@ -1,7 +1,6 @@
 import string
 import secrets
 import logging
-from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,6 +11,7 @@ from .models import RH
 from .serializers import ChangeRhSerializer, RHSerializer
 from .permissions import IsAdminUserRole
 from employees.permissions import IsRhOrAdmin
+from GRH.utils import envoyer_email_brevo
 
 logger = logging.getLogger(__name__)
 
@@ -109,27 +109,119 @@ Connectez-vous : {login_url}"""
             </html>
             """
             
-            email_envoye = True
-            try:
-                send_mail(
-                    sujet, 
-                    message_simple, 
-                    settings.DEFAULT_FROM_EMAIL, 
-                    [rh.email], 
-                    fail_silently=False,
-                    html_message=html_message
-                )
-            except Exception as e:
-                email_envoye = False
-                logger.error(f" Erreur envoi email pour {rh.email} : {e}")
-
-            # La réponse de succès est bien placée APRÈS le try/except
-            response_data = serializer.data
-            response_data["notification"] = (
-                f"Compte créé. Email {'envoyé avec succès' if email_envoye else 'échoué (vérifier les logs)'}."
+            # Envoi via l'API HTTP Brevo (contourne le blocage SMTP de Render)
+            email_envoye = envoyer_email_brevo(
+                destinataire_email=rh.email,
+                destinataire_nom=rh.nom,
+                sujet=sujet,
+                message_html=html_message,
+                message_texte=message_simple
             )
+
+            response_data = serializer.data
+            if email_envoye:
+                response_data["notification"] = f"Compte créé. Email envoyé avec succès."
+            else:
+                response_data["notification"] = f"Compte créé avec succès, mais l'envoi de la notification a échoué."
+
             return Response(response_data, status=status.HTTP_201_CREATED)
         
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RHDetailUpdateDeleteAPIView(APIView):
+    """Détail et modification — Admin et RH peuvent accéder"""
+    permission_classes = [IsRhOrAdmin]
+
+    def get_object(self, pk):
+        try:
+            return RH.objects.get(pk=pk)
+        except RH.DoesNotExist:
+            return None
+
+    @extend_schema(summary="Détail d'un RH", responses=RHSerializer)
+    def get(self, request, pk):
+        rh = self.get_object(pk)
+        if not rh:
+            return Response({"detail": "RH introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response(RHSerializer(rh).data, status=status.HTTP_200_OK)
+
+    @extend_schema(summary="Modifier un RH", request=RHSerializer, responses=RHSerializer)
+    def put(self, request, pk):
+        rh = self.get_object(pk)
+        if not rh:
+            return Response({"detail": "RH introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = RHSerializer(rh, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(summary="Désactiver un RH (Admin uniquement)", responses=None)
+    def delete(self, request, pk):
+        if request.user.role != 'ADMIN':
+            return Response(
+                {"detail": "Seul un administrateur peut désactiver un compte."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        rh = self.get_object(pk)
+        if not rh:
+            return Response({"detail": "RH introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        
+        rh.is_active = False
+        rh.save()
+        
+        return Response({"detail": "RH désactivé avec succès."}, status=status.HTTP_200_OK)
+
+
+class RHActiverView(APIView):
+    """Réactivation — ADMIN UNIQUEMENT"""
+    permission_classes = [IsAdminUserRole]
+
+    @extend_schema(summary="Réactiver un RH (Admin uniquement)", responses=RHSerializer)
+    def put(self, request, pk):
+        try:
+            rh = RH.objects.get(pk=pk)
+        except RH.DoesNotExist:
+            return Response({"detail": "RH introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        
+        rh.is_active = True
+        rh.save()
+        
+        return Response({
+            "detail": "RH réactivé avec succès.",
+            "RH": RHSerializer(rh).data
+        }, status=status.HTTP_200_OK)
+
+
+class RhChangeAPIView(APIView):
+    permission_classes = [IsRhOrAdmin]
+
+    def get_object(self, pk):
+        try:
+            return RH.objects.get(pk=pk)
+        except RH.DoesNotExist:
+            return None
+
+    @extend_schema(summary="Modifier son propre profil", request=ChangeRhSerializer, responses=ChangeRhSerializer)
+    def put(self, request, pk):
+        rh = self.get_object(pk)
+        if not rh:
+            return Response({"detail": "RH introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if request.user.id != rh.id:
+            return Response(
+                {"detail": "Vous ne pouvez modifier que votre propre profil."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = ChangeRhSerializer(rh, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

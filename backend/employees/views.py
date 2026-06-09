@@ -1,7 +1,6 @@
 import string
 import secrets
 import logging
-from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -14,6 +13,7 @@ from .serializers import ChangeEmployeSerializer, EmployeSerializer
 from .permissions import IsRhOrAdmin
 from contrats.models import Contrat
 from conges.models import Conge
+from GRH.utils import envoyer_email_brevo
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class EmployeListCreateAPIView(APIView):
             # Extraction du rôle au format texte propre
             role_texte = employe.get_role_display() if hasattr(employe, 'get_role_display') else str(employe.role)
             
-            # Style du badge selon le rôle (avec valeur par défaut par sécurité)
+            # Style du badge selon le rôle
             if employe.role == 'EMPLOYE':
                 badge_style = "background-color: #28a745; color: #ffffff;"
             else:
@@ -130,19 +130,14 @@ Veuillez vous connecter pour modifier votre mot de passe : {login_url}"""
             </html>
             """
             
-            email_envoye = True
-            try:
-                send_mail(
-                    sujet, 
-                    message_simple, 
-                    settings.DEFAULT_FROM_EMAIL, 
-                    [employe.email], 
-                    fail_silently=False, # ⚠️ CRUCIAL : Remis à False pour voir les erreurs
-                    html_message=html_message
-                )
-            except Exception as e:
-                email_envoye = False
-                logger.error(f" Erreur envoi email pour {employe.email} : {e}")
+            # Envoi via l'API HTTP Brevo (contourne le blocage SMTP de Render)
+            email_envoye = envoyer_email_brevo(
+                destinataire_email=employe.email,
+                destinataire_nom=employe.nom,
+                sujet=sujet,
+                message_html=html_message,
+                message_texte=message_simple
+            )
 
             response_data = serializer.data
             if email_envoye:
@@ -181,7 +176,6 @@ class EmployeDetailUpdateDeleteActiveAPIView(APIView):
         employe = self.get_object(id)
         if not employe:
             return Response({"detail": "Employé introuvable."}, status=status.HTTP_404_NOT_FOUND)
-        # partial=True → seuls les champs envoyés sont mis à jour
         serializer = EmployeSerializer(employe, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -196,9 +190,9 @@ class EmployeDetailUpdateDeleteActiveAPIView(APIView):
         employe.is_active = False
         employe.save()
         return Response({"detail": "Employé désactivé avec succès."}, status=status.HTTP_200_OK)
-    
+
+
 class EmployeActiverView(APIView):
-       
     permission_classes = [IsRhOrAdmin]
 
     @extend_schema(summary="Réactiver un employé archivé (RH/Admin)", responses=EmployeSerializer)
@@ -210,11 +204,14 @@ class EmployeActiverView(APIView):
         
         emp.is_active = True
         emp.save()
-        return Response({"detail": "Employé réactivé avec succès.","Employe": EmployeSerializer(emp).data}, status=status.HTTP_200_OK)
-        
+        return Response({
+            "detail": "Employé réactivé avec succès.",
+            "Employe": EmployeSerializer(emp).data
+        }, status=status.HTTP_200_OK)
+
 
 class EmployeChangeAPIView(APIView):
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated]
 
     def get_object(self, id):
         try:
@@ -247,6 +244,7 @@ class DashboardStatsAPIView(APIView):
         
         data = {}
 
+        # 1. Statistiques globales pour les RH et ADMIN
         if role in ['RH', 'ADMIN'] or user.is_superuser:
             data['employes_totaux'] = Employe.objects.count()
             data['contrats_actifs'] = Contrat.objects.filter(statut='ACTIF').count()

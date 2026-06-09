@@ -122,16 +122,16 @@ Veuillez vous connecter pour modifier votre mot de passe : {login_url}"""
             email_envoye = True
             try:
                 send_mail(
-                    sujet,
-                    message_simple,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [admin.email],
-                    fail_silently=True,
+                    sujet, 
+                    message_simple, 
+                    settings.DEFAULT_FROM_EMAIL, 
+                    [admin.email], # ou admin.email / employe.email
+                    fail_silently=False, 
                     html_message=html_message
                 )
             except Exception as e:
                 email_envoye = False
-                logger.error(f"Erreur envoi email pour {admin.email} : {e}")
+                logger.error(f" Erreur envoi email pour {admin.email} : {e}")
 
             response_data = serializer.data
             if email_envoye:

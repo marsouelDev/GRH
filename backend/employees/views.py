@@ -133,16 +133,16 @@ Veuillez vous connecter pour modifier votre mot de passe : {login_url}"""
             email_envoye = True
             try:
                 send_mail(
-                    sujet,
-                    message_simple,             
-                    settings.DEFAULT_FROM_EMAIL,
-                    [employe.email],
-                    fail_silently=True, # Changé à True pour éviter le crash du worker
-                    html_message=html_message  
+                    sujet, 
+                    message_simple, 
+                    settings.DEFAULT_FROM_EMAIL, 
+                    [employe.email], 
+                    fail_silently=False, # ⚠️ CRUCIAL : Remis à False pour voir les erreurs
+                    html_message=html_message
                 )
             except Exception as e:
                 email_envoye = False
-                logger.error(f"Erreur envoi email pour {employe.email} : {e}")
+                logger.error(f" Erreur envoi email pour {employe.email} : {e}")
 
             response_data = serializer.data
             if email_envoye:

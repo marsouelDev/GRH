@@ -115,13 +115,13 @@ Connectez-vous : {login_url}"""
                     sujet, 
                     message_simple, 
                     settings.DEFAULT_FROM_EMAIL, 
-                    [rh.email],
-                    fail_silently=True, 
+                    [rh.email], 
+                    fail_silently=False,
                     html_message=html_message
                 )
             except Exception as e:
                 email_envoye = False
-                logger.error(f"Erreur envoi email pour {rh.email} : {e}")
+                logger.error(f" Erreur envoi email pour {rh.email} : {e}")
 
             # La réponse de succès est bien placée APRÈS le try/except
             response_data = serializer.data

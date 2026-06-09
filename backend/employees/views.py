@@ -1,5 +1,6 @@
 import string
-import random
+import secrets
+import logging
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework.views import APIView
@@ -7,19 +8,20 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema
+
 from .models import Employe
 from .serializers import ChangeEmployeSerializer, EmployeSerializer
 from .permissions import IsRhOrAdmin
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from contrats.models import Contrat
 from conges.models import Conge
 
+logger = logging.getLogger(__name__)
 
-def generer_mot_de_passe(length=10):
-    characters = string.ascii_letters + string.digits
-    return ''.join(random.choice(characters) for _ in range(length))
+
+def generer_mot_de_passe(length=12):
+    """Génère un mot de passe sécurisé avec lettres, chiffres et caractères spéciaux."""
+    characters = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(secrets.choice(characters) for _ in range(length))
 
 
 class EmployeListCreateAPIView(APIView):
@@ -41,22 +43,25 @@ class EmployeListCreateAPIView(APIView):
         if serializer.is_valid():
             mot_de_passe = generer_mot_de_passe()
 
-            serializer.validated_data['password'] = mot_de_passe
+            # 1. Création de l'employé
             employe = serializer.save()
+            
+            # 2. Hachage sécurisé du mot de passe (CRITIQUE)
+            employe.set_password(mot_de_passe)
+            employe.save(update_fields=['password'])
 
-            sujet = "Votre compte dans notre plateforme "
             login_url = "https://gestion-culqxqs4x-marsouel-s-projects.vercel.app/login"
             
             # Extraction du rôle au format texte propre
             role_texte = employe.get_role_display() if hasattr(employe, 'get_role_display') else str(employe.role)
             
- 
+            # Style du badge selon le rôle (avec valeur par défaut par sécurité)
             if employe.role == 'EMPLOYE':
                 badge_style = "background-color: #28a745; color: #ffffff;"
-           
+            else:
+                badge_style = "background-color: #6c757d; color: #ffffff;"
 
             sujet = "Création de votre compte - RH_Manager"
-
             
             message_simple = f"""Bonjour {employe.nom},
 
@@ -69,7 +74,6 @@ Rôle : {role_texte}
 
 Veuillez vous connecter pour modifier votre mot de passe : {login_url}"""
 
-            
             html_message = f"""
             <html>
                 <body style="font-family: Arial, sans-serif; background-color: #f4f5f7; margin: 0; padding: 20px;">
@@ -133,11 +137,12 @@ Veuillez vous connecter pour modifier votre mot de passe : {login_url}"""
                     message_simple,             
                     settings.DEFAULT_FROM_EMAIL,
                     [employe.email],
-                    fail_silently=False,
+                    fail_silently=True, # Changé à True pour éviter le crash du worker
                     html_message=html_message  
                 )
-            except Exception:
+            except Exception as e:
                 email_envoye = False
+                logger.error(f"Erreur envoi email pour {employe.email} : {e}")
 
             response_data = serializer.data
             if email_envoye:
@@ -196,16 +201,16 @@ class EmployeActiverView(APIView):
        
     permission_classes = [IsRhOrAdmin]
 
-    @extend_schema(summary="Réactiver un poste archivé (RH/Admin)", responses=EmployeSerializer)
+    @extend_schema(summary="Réactiver un employé archivé (RH/Admin)", responses=EmployeSerializer)
     def put(self, request, id):
         try:
             emp = Employe.objects.get(id=id)
         except Employe.DoesNotExist:
-            return Response({"detail": "Employee introuvable."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "Employé introuvable."}, status=status.HTTP_404_NOT_FOUND)
         
         emp.is_active = True
         emp.save()
-        return Response({"detail": "Employe réactivé avec succès.","Employe": EmployeSerializer(emp).data}, status=status.HTTP_200_OK)
+        return Response({"detail": "Employé réactivé avec succès.","Employe": EmployeSerializer(emp).data}, status=status.HTTP_200_OK)
         
 
 class EmployeChangeAPIView(APIView):
@@ -217,7 +222,7 @@ class EmployeChangeAPIView(APIView):
         except Employe.DoesNotExist:
             return None
     
-    @extend_schema(summary="Modifier un employé", request=ChangeEmployeSerializer, responses=ChangeEmployeSerializer)
+    @extend_schema(summary="Modifier son propre profil", request=ChangeEmployeSerializer, responses=ChangeEmployeSerializer)
     def put(self, request, id):
         employe = self.get_object(id)
         if not employe:
@@ -232,6 +237,7 @@ class EmployeChangeAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class DashboardStatsAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -241,7 +247,6 @@ class DashboardStatsAPIView(APIView):
         
         data = {}
 
-        # 1. Statistiques globales pour les RH et ADMIN
         if role in ['RH', 'ADMIN'] or user.is_superuser:
             data['employes_totaux'] = Employe.objects.count()
             data['contrats_actifs'] = Contrat.objects.filter(statut='ACTIF').count()
@@ -249,7 +254,8 @@ class DashboardStatsAPIView(APIView):
         
         # 2. Statistiques privées pour un simple EMPLOYE
         else:
-            data['mes_conges_restants'] = 18  # Exemple (ou calcul selon votre modèle)
+            # TODO: Remplacer 18 par le vrai calcul basé sur votre modèle de solde de congés
+            data['mes_conges_restants'] = 18  
             data['mes_demandes_en_attente'] = Conge.objects.filter(employe=user, statut='EN_ATTENTE').count()
 
         return Response(data)

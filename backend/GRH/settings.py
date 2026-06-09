@@ -6,28 +6,30 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def get_env_clean(name, default=None):
-    value = os.getenv(name, default)
-    if isinstance(value, str):
-        return value.strip().strip("'").strip('"')
-    return value
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 # ═══════════════════════════════════════════════════════════════
-# 1. SÉCURITÉ ET DÉBOGAGE (Dynamique pour Render)
+#  SÉCURITÉ ET DÉBOGAGE
 # ═══════════════════════════════════════════════════════════════
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-j+z)jp*#n&&w80!$cz*p8@^)ru9u5uw=+cb-vh@74qa)t8yzf4')
+
+#  Plus de valeur par défaut exposée dans le code
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError(" SECRET_KEY manquante. Ajoutez-la dans les variables d'environnement Render.")
+
+# True en local (.env), False sur Render
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
+#  Render injecte automatiquement RENDER_EXTERNAL_HOSTNAME
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-# Ajoute automatiquement l'URL Render (.onrender.com)
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
+
 # ═══════════════════════════════════════════════════════════════
-# 2. APPLICATIONS
+#  APPLICATIONS
 # ═══════════════════════════════════════════════════════════════
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -36,15 +38,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Tiers
     "rest_framework",
     "corsheaders",
     "rest_framework_simplejwt",
     "drf_spectacular",
-    # Cloudinary pour le stockage des fichiers médias (Remplace le stockage local)
+    # Cloudinary pour le stockage des fichiers médias
     "cloudinary",
     "cloudinary_storage",
-    # Apps locales
     "Users",
     "employees",
     "administrateur",
@@ -57,23 +57,29 @@ INSTALLED_APPS = [
     "rapport",
     "notification",
     "analytics",
-    # Note: 'django_crontab' a été retiré car incompatible avec Render
 ]
 
+
+# ═══════════════════════════════════════════════════════════════
+# 3. MIDDLEWARE
+#  WhiteNoiseMiddleware ajouté pour servir les fichiers statiques
+# ═══════════════════════════════════════════════════════════════
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware", 
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",         
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "justification.middleware.MediaXFrameOptionsMiddleware", 
+    "justification.middleware.MediaXFrameOptionsMiddleware",
 ]
 
+
 # ═══════════════════════════════════════════════════════════════
-# 3. CONFIGURATION API & CORS
+#  CONFIGURATION API & CORS
 # ═══════════════════════════════════════════════════════════════
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -90,8 +96,7 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
     "http://127.0.0.1:4200",
-    # AJOUTEZ ICI L'URL DE VOTRE FRONTEND ANGULAR EN PRODUCTION
-    # "https://votre-frontend.onrender.com", 
+   
 ]
 
 CORS_ALLOW_HEADERS = [
@@ -108,21 +113,22 @@ SIMPLE_JWT = {
     "TOKEN_OBTAIN_SERIALIZER": "administrateur.serializers.MyTokenObtainPairSerializer",
 }
 
+
 # ═══════════════════════════════════════════════════════════════
-# 4. BASE DE DONNÉES (PostgreSQL pour Render)
+# 5. BASE DE DONNÉES (PostgreSQL — Render)
+#  ssl_require retiré (déjà inclus dans l'URL Render)
 # ═══════════════════════════════════════════════════════════════
-# Render ne supporte pas MySQL. Nous utilisons dj_database_url pour PostgreSQL.
-# La variable DATABASE_URL sera fournie par Render ou Neon/Supabase.
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
-        ssl_require=True
+        #  ssl_require retiré : l'Internal URL Render inclut déjà sslmode=require
     )
 }
 
+
 # ═══════════════════════════════════════════════════════════════
-# 5. TEMPLATES, WSGI, URLS
+#  TEMPLATES, WSGI, URLS
 # ═══════════════════════════════════════════════════════════════
 ROOT_URLCONF = "GRH.urls"
 
@@ -155,35 +161,44 @@ TIME_ZONE = "Africa/Douala"
 USE_I18N = True
 USE_TZ = True
 
-# ═══════════════════════════════════════════════════════════════
-# 6. FICHIERS STATIQUES & MÉDIAS (Cloudinary)
-# ═══════════════════════════════════════════════════════════════
-# Fichiers Statiques (CSS, JS, Images du thème)
-STATIC_URL = "static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / 'staticfiles' # OBLIGATOIRE pour 'collectstatic' sur Render
 
-# Fichiers Médias (Uploads utilisateurs : Justifications, Photos, etc.)
-# Configuration pour Cloudinary (Stockage Cloud)
+# ═══════════════════════════════════════════════════════════════
+#  FICHIERS STATIQUES & MÉDIAS
+# ═══════════════════════════════════════════════════════════════
+
+# Fichiers Statiques
+STATIC_URL = "static/"
+
+#  Ne plante pas si le dossier static/ n'existe pas encore
+_static_dir = BASE_DIR / "static"
+STATICFILES_DIRS = [_static_dir] if _static_dir.exists() else []
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+#  WhiteNoise compresse et met en cache les fichiers statiques
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Fichiers Médias — Cloudinary (uploads utilisateurs)
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 MEDIA_URL = '/media/'
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_KEY':    os.getenv('CLOUDINARY_API_KEY'),
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
 }
 
-# Limites de taille
+# Limites de taille des uploads (5 MB)
 FILE_UPLOAD_PERMISSIONS = 0o644
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
 
-X_FRAME_OPTIONS = 'SAMEORIGIN'  
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
 
 # ═══════════════════════════════════════════════════════════════
-# 7. AUTHENTIFICATION & UTILISATEURS
+#  AUTHENTIFICATION & UTILISATEURS
 # ═══════════════════════════════════════════════════════════════
 SPECTACULAR_SETTINGS = {
     "TITLE": "API d'authentification JWT",
@@ -200,19 +215,24 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
+
 # ═══════════════════════════════════════════════════════════════
-# 8. EMAIL & CACHE
+#  EMAIL
+# Migré de Gmail vers Brevo (plus fiable en production)
 # ═══════════════════════════════════════════════════════════════
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_USE_SSL = False
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp-relay.brevo.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = True
-EMAIL_PORT = 587
+EMAIL_USE_SSL = False   # TLS et SSL ne peuvent pas être True en même temps
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASSWORD")
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 
-# Cache en mémoire (Suffisant pour commencer sur Render)
+
+# ═══════════════════════════════════════════════════════════════
+# 10. CACHE
+# ═══════════════════════════════════════════════════════════════
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -223,10 +243,10 @@ CACHES = {
 }
 CACHE_KEY_PREFIX = 'grh_'
 
+
 # ═══════════════════════════════════════════════════════════════
-# 9. TÂCHES CRON (Gérées par Render Dashboard)
+# 11. TÂCHES CRON (Render Dashboard)
 # ═══════════════════════════════════════════════════════════════
-# La section CRONJOBS a été supprimée.
-# Vous devez créer ces tâches manuellement dans le dashboard Render :
-# 1. New Cron Job -> Command: python manage.py verifier_expiration_contrats --jours=7 -> Schedule: 0 8 * * *
-# 2. New Cron Job -> Command: python manage.py verifier_expiration_contrats --jours=30 -> Schedule: 0 9 * * 1
+# Créer dans le dashboard Render → New Cron Job :
+# 1. python manage.py verifier_expiration_contrats --jours=7   → Schedule: 0 8 * * *
+# 2. python manage.py verifier_expiration_contrats --jours=30  → Schedule: 0 9 * * 1

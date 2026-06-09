@@ -100,11 +100,11 @@ Connectez-vous : {login_url}"""
             """
             
             email_envoye = True
-            try:
-                send_mail(sujet, message_simple, settings.DEFAULT_FROM_EMAIL, [rh.email],
-                          fail_silently=False, html_message=html_message)
-            except Exception:
-                email_envoye = False
+        try:
+            send_mail(sujet, message_simple, settings.DEFAULT_FROM_EMAIL, [rh.email],
+              fail_silently=True, html_message=html_message)
+        except Exception as e:
+            print(f"Erreur envoi email : {e}")
 
             response_data = serializer.data
             response_data["notification"] = (

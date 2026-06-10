@@ -1,0 +1,18 @@
+name: Vérification contrats expirants
+
+on:
+  schedule:
+    # Tous les jours à 8h00 UTC = 9h00 heure Douala
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Permet de lancer manuellement depuis GitHub
+
+jobs:
+  verifier-contrats:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Appeler l'API Render pour vérifier les contrats
+        run: |
+          curl -X POST "${{ secrets.RENDER_API_URL }}/api/cron/verifier-contrats/?jours=7" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"

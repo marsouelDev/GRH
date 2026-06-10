@@ -19,6 +19,7 @@ class CongeListCreateView(APIView):
     @extend_schema(summary="Liste des congés (ADMIN/RH tout, Employé uniquement les siens)")
     def get(self, request):
         role = get_user_role(request)
+        logger.info(f"🔍 GET /conges/ - Rôle: {role}, User: {request.user}")
 
         if role in ('RH', 'ADMIN'):
             qs = Conge.objects.select_related('employe').all()
@@ -35,11 +36,14 @@ class CongeListCreateView(APIView):
         if employe_id and role in ('RH', 'ADMIN'):
             qs = qs.filter(employe_id=employe_id)
 
-        return Response(CongeSerializer(qs, many=True).data)
+        serializer = CongeSerializer(qs, many=True)
+        logger.info(f"✅ {len(serializer.data)} congé(s) retourné(s)")
+        return Response(serializer.data)
 
     @extend_schema(summary="Soumettre une demande de congé (RH ou EMPLOYE uniquement)")
     def post(self, request):
         role = get_user_role(request)
+        logger.info(f"🔍 POST /conges/ - Rôle: {role}, User: {request.user}")
 
         if role == 'ADMIN':
             return Response(
@@ -56,17 +60,19 @@ class CongeListCreateView(APIView):
             else:
                 conge = serializer.save(statut='EN_ATTENTE')
 
+            logger.info(f"✅ Congé #{conge.id} créé avec succès")
+
             try:
                 self._envoyer_notifications_rh(conge)
             except Exception as e:
                 logger.error(f"❌ Erreur envoi notifications RH : {e}", exc_info=True)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(CongeSerializer(conge).data, status=status.HTTP_201_CREATED)
 
+        logger.error(f"❌ Erreurs de validation: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def _envoyer_notifications_rh(self, conge):
-        
         logger.info(f"📤 Début envoi notifications RH pour congé #{conge.id}")
 
         rh_list = RH.objects.filter(is_active=True)
@@ -186,6 +192,7 @@ class CongeDetailUpdateDeleteView(APIView):
             return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
 
         conge.annuler()
+        logger.info(f"✅ Congé #{id} annulé")
         return Response({"detail": "Le congé a bien été annulé."}, status=status.HTTP_200_OK)
 
 
@@ -194,27 +201,34 @@ class CongeApprouverView(APIView):
 
     @extend_schema(summary="Approuver un congé (RH uniquement)")
     def put(self, request, id):
-        if get_user_role(request) != 'RH':
+        role = get_user_role(request)
+        logger.info(f"🔍 PUT /conges/{id}/approuver/ - Rôle: {role}, User: {request.user}")
+        
+        if role != 'RH':
+            logger.warning(f"⚠️ Accès refusé pour rôle: {role}")
             return Response({"detail": "Réservé au RH."}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             conge = Conge.objects.select_related('employe').get(id=id)
+            logger.info(f"✅ Congé trouvé: #{conge.id}, statut: {conge.statut}")
         except Conge.DoesNotExist:
+            logger.error(f"❌ Congé #{id} introuvable")
             return Response({"detail": "Introuvable."}, status=status.HTTP_404_NOT_FOUND)
 
         if conge.statut != 'EN_ATTENTE':
+            logger.warning(f"⚠️ Congé déjà traité: {conge.statut}")
             return Response({"detail": "Ce congé a déjà été traité."}, status=status.HTTP_400_BAD_REQUEST)
 
         commentaire = request.data.get('commentaire', '')
+        logger.info(f"📝 Commentaire: '{commentaire}'")
 
         try:
             conge.approuver(rh=request.user, commentaire=commentaire)
-            logger.info(f"✅ Congé #{id} approuvé par {request.user}")
+            logger.info(f"✅ Congé #{id} approuvé avec succès")
         except Exception as e:
             logger.error(f"❌ Erreur approbation congé #{id} : {e}", exc_info=True)
-            return Response({"detail": "Erreur lors de l'approbation."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"detail": f"Erreur lors de l'approbation: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        
         try:
             if conge.employe:
                 Notification.objects.create(
@@ -227,14 +241,14 @@ class CongeApprouverView(APIView):
                     ),
                     lien=f"/conges/{conge.id}/"
                 )
-                logger.info(f"✅ Notification d'approbation envoyée à l'employé #{conge.employe.id}")
+                logger.info(f"✅ Notification envoyée à l'employé #{conge.employe.id}")
         except Exception as e:
             logger.error(f"❌ Erreur notif approbation : {e}", exc_info=True)
 
         return Response({
             "detail": "Congé approuvé avec succès.",
             "conge": CongeSerializer(conge).data
-        })
+        }, status=status.HTTP_200_OK)
 
 
 class CongeRefuserView(APIView):
@@ -242,25 +256,33 @@ class CongeRefuserView(APIView):
 
     @extend_schema(summary="Refuser un congé (RH uniquement)")
     def put(self, request, id):
-        if get_user_role(request) != 'RH':
+        role = get_user_role(request)
+        logger.info(f"🔍 PUT /conges/{id}/refuser/ - Rôle: {role}, User: {request.user}")
+        
+        if role != 'RH':
+            logger.warning(f"⚠️ Accès refusé pour rôle: {role}")
             return Response({"detail": "Réservé au RH."}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             conge = Conge.objects.select_related('employe').get(id=id)
+            logger.info(f"✅ Congé trouvé: #{conge.id}, statut: {conge.statut}")
         except Conge.DoesNotExist:
+            logger.error(f"❌ Congé #{id} introuvable")
             return Response({"detail": "Introuvable."}, status=status.HTTP_404_NOT_FOUND)
 
         if conge.statut != 'EN_ATTENTE':
+            logger.warning(f"⚠️ Congé déjà traité: {conge.statut}")
             return Response({"detail": "Ce congé a déjà été traité."}, status=status.HTTP_400_BAD_REQUEST)
 
         commentaire = request.data.get('commentaire', '')
+        logger.info(f"📝 Commentaire: '{commentaire}'")
 
         try:
             conge.refuser(rh=request.user, commentaire=commentaire)
-            logger.info(f"✅ Congé #{id} refusé par {request.user}")
+            logger.info(f"✅ Congé #{id} refusé avec succès")
         except Exception as e:
             logger.error(f"❌ Erreur refus congé #{id} : {e}", exc_info=True)
-            return Response({"detail": "Erreur lors du refus."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"detail": f"Erreur lors du refus: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             if conge.employe:
@@ -274,11 +296,11 @@ class CongeRefuserView(APIView):
                     ),
                     lien=f"/conges/{conge.id}/"
                 )
-                logger.info(f"✅ Notification de refus envoyée à l'employé #{conge.employe.id}")
+                logger.info(f"✅ Notification envoyée à l'employé #{conge.employe.id}")
         except Exception as e:
             logger.error(f"❌ Erreur notif refus : {e}", exc_info=True)
 
         return Response({
             "detail": "Congé refusé.",
             "conge": CongeSerializer(conge).data
-        })
+        }, status=status.HTTP_200_OK)

@@ -7,13 +7,22 @@ class CongeSerializer(serializers.ModelSerializer):
     statut_label = serializers.SerializerMethodField()
     type_label = serializers.SerializerMethodField()
     duree_jours = serializers.SerializerMethodField()
-    valide_par_nom = serializers.SerializerMethodField()  
+    valide_par_nom = serializers.SerializerMethodField()
+    commentaire_refus = serializers.SerializerMethodField()
 
-    employe = serializers.PrimaryKeyRelatedField(queryset=Employe.objects.all(),required=False,allow_null=True,write_only=True)
+    employe = serializers.PrimaryKeyRelatedField(
+        queryset=Employe.objects.all(),
+        required=False,
+        allow_null=True,
+        write_only=True
+    )
 
     def get_employe_nom(self, obj):
         if obj.employe:
-            return f"{obj.employe.nom} {obj.employe.prenom}".strip()
+            if hasattr(obj.employe, 'nom') and hasattr(obj.employe, 'prenom'):
+                return f"{obj.employe.nom} {obj.employe.prenom}".strip()
+            elif hasattr(obj.employe, 'first_name'):
+                return f"{obj.employe.first_name} {obj.employe.last_name}".strip()
         return "Employé inconnu"
 
     def get_statut_label(self, obj):
@@ -27,6 +36,11 @@ class CongeSerializer(serializers.ModelSerializer):
 
     def get_valide_par_nom(self, obj):
         return obj.get_valide_par_nom()
+
+    def get_commentaire_refus(self, obj):
+        if obj.statut == 'REFUSE' and obj.commentaire:
+            return obj.commentaire
+        return None
 
     class Meta:
         model = Conge
@@ -44,8 +58,9 @@ class CongeSerializer(serializers.ModelSerializer):
             'statut_label',
             'date_demande',
             'commentaire',
-            'date_validation',    
-            'valide_par_nom',    
+            'commentaire_refus',
+            'date_validation',
+            'valide_par_nom',
         ]
         read_only_fields = [
             'id',
@@ -56,10 +71,11 @@ class CongeSerializer(serializers.ModelSerializer):
             'date_demande',
             'date_validation',
             'valide_par_nom',
+            'commentaire_refus',
         ]
         extra_kwargs = {
             'date_demande': {'read_only': True},
-            'statut': {'read_only': True},  
+            'statut': {'read_only': True},
         }
 
     def validate(self, data):

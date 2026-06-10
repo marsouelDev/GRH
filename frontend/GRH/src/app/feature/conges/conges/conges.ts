@@ -1,13 +1,15 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   inject,
   ChangeDetectorRef,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { timer } from 'rxjs'; 
+import { Subject, timer } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import { CongeService } from '../../../services/conges/conges';
 import { AuthService, UtilisateurCourant } from '../../../services/auth/auth.service';
@@ -22,11 +24,12 @@ import { CongeModel, TypeConge } from '../../../models/conge';
   styleUrls: ['./conges.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CongeComponent implements OnInit {
+export class CongeComponent implements OnInit, OnDestroy {
   private congeService = inject(CongeService);
   private authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
   themeService = inject(ThemeService);
+  private destroy$ = new Subject<void>();
 
   user: UtilisateurCourant = this.authService.getCurrentUser();
 
@@ -61,6 +64,11 @@ export class CongeComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadConges();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get isManager(): boolean {
@@ -405,10 +413,12 @@ export class CongeComponent implements OnInit {
   }
 
   private masquerMessages(): void {
-    timer(4000).subscribe(() => {
-      this.message = '';
-      this.errorMessage = '';
-      this.cdr.markForCheck();
-    });
+    timer(4000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.message = '';
+        this.errorMessage = '';
+        this.cdr.markForCheck();
+      });
   }
 }

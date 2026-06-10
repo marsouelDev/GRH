@@ -5,19 +5,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 -->
 
-<div class="cw" [class.cw--dark]="isDarkMode">
-
-  <!-- ══════════════════════════════════════════
-       TOASTS
-  ════════════════════════════════════════════ -->
-  <div class="toast-zone">
-    <div class="toast toast--ok" *ngIf="message">
-      <i class="bi bi-check-circle-fill"></i>{{ message }}
-    </div>
-    <div class="toast toast--err" *ngIf="errorMessage">
-      <i class="bi bi-exclamation-triangle-fill"></i>{{ errorMessage }}
-    </div>
+<!-- ✅ TOASTS EN DEHORS DU CONTENEUR (toujours visibles) -->
+<div class="toast-zone">
+  <div class="toast toast--ok" *ngIf="message">
+    <i class="bi bi-check-circle-fill"></i>{{ message }}
   </div>
+  <div class="toast toast--err" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-triangle-fill"></i>{{ errorMessage }}
+  </div>
+</div>
+
+<div class="cw" [class.cw--dark]="isDarkMode">
 
   <!-- ══════════════════════════════════════════
        HEADER

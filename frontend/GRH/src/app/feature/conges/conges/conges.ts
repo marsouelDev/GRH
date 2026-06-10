@@ -1,5 +1,3 @@
-// src/app/features/conges/conges.component.ts
-
 import {
   Component,
   OnInit,
@@ -20,7 +18,7 @@ import { CongeModel, TypeConge } from '../../../models/conge';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './conges.html',
-  styleUrl: './conges.css',
+  styleUrls: ['./conges.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CongeComponent implements OnInit {
@@ -149,7 +147,6 @@ export class CongeComponent implements OnInit {
   creerConge(): void {
     if (this.isManager) return;
 
-    // Validation
     if (!this.formulaire.date_debut || !this.formulaire.date_fin) {
       this.errorMessage = 'Veuillez remplir les dates de début et de fin.';
       this.masquerMessages();
@@ -291,7 +288,7 @@ export class CongeComponent implements OnInit {
   }
 
   demanderApprobation(id: number): void {
-    if (!this.isRH) return;
+    if (!this.isRH) return; // ✅ SEULS LES RH PEUVENT APPROUVER
 
     this.modalConfirmationConfig = {
       titre: 'Approuver le congé',
@@ -325,7 +322,7 @@ export class CongeComponent implements OnInit {
   }
 
   ouvrirModalRefus(id: number): void {
-    if (!this.isRH) return;
+    if (!this.isRH) return; // ✅ SEULS LES RH PEUVENT REFUSER
 
     this.congeARefuserId = id;
     this.commentaireRefus = '';
@@ -334,7 +331,7 @@ export class CongeComponent implements OnInit {
   }
 
   confirmerRefus(): void {
-    if (!this.congeARefuserId || !this.isRH) return;
+    if (!this.congeARefuserId || !this.isRH) return; // ✅ SEULS LES RH PEUVENT REFUSER
 
     this.chargement = true;
     this.cdr.markForCheck();
@@ -387,13 +384,13 @@ export class CongeComponent implements OnInit {
   }
 
   peutModifier(conge: CongeModel): boolean {
-    if (this.isRH) return true;
+    if (this.isManager) return true;
     return this.isEmploye && conge.statut === 'EN_ATTENTE';
   }
 
   peutAnnuler(conge: CongeModel): boolean {
     if (!conge || conge.statut === 'ANNULE') return false;
-    if (this.isRH || this.isAdmin) return true;
+    if (this.isManager) return true;
     return this.isEmploye && conge.statut === 'EN_ATTENTE';
   }
 

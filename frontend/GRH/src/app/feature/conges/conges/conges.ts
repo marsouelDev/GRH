@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { timer } from 'rxjs'; 
 
 import { CongeService } from '../../../services/conges/conges';
 import { AuthService, UtilisateurCourant } from '../../../services/auth/auth.service';
@@ -288,7 +289,7 @@ export class CongeComponent implements OnInit {
   }
 
   demanderApprobation(id: number): void {
-    if (!this.isRH) return; // ✅ SEULS LES RH PEUVENT APPROUVER
+    if (!this.isRH) return;
 
     this.modalConfirmationConfig = {
       titre: 'Approuver le congé',
@@ -322,7 +323,7 @@ export class CongeComponent implements OnInit {
   }
 
   ouvrirModalRefus(id: number): void {
-    if (!this.isRH) return; // ✅ SEULS LES RH PEUVENT REFUSER
+    if (!this.isRH) return;
 
     this.congeARefuserId = id;
     this.commentaireRefus = '';
@@ -331,7 +332,7 @@ export class CongeComponent implements OnInit {
   }
 
   confirmerRefus(): void {
-    if (!this.congeARefuserId || !this.isRH) return; // ✅ SEULS LES RH PEUVENT REFUSER
+    if (!this.congeARefuserId || !this.isRH) return;
 
     this.chargement = true;
     this.cdr.markForCheck();
@@ -404,10 +405,10 @@ export class CongeComponent implements OnInit {
   }
 
   private masquerMessages(): void {
-    setTimeout(() => {
+    timer(4000).subscribe(() => {
       this.message = '';
       this.errorMessage = '';
       this.cdr.markForCheck();
-    }, 4000);
+    });
   }
 }

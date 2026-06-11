@@ -31,6 +31,9 @@ export class CongeComponent implements OnInit, OnDestroy {
   themeService = inject(ThemeService);
   private destroy$ = new Subject<void>();
 
+  //  Timer unique pour les messages
+  private messageTimer: any = null;
+
   user: UtilisateurCourant = this.authService.getCurrentUser();
 
   conges: CongeModel[] = [];
@@ -69,6 +72,10 @@ export class CongeComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    //  Nettoyer le timer
+    if (this.messageTimer) {
+      clearTimeout(this.messageTimer);
+    }
   }
 
   get isManager(): boolean {
@@ -157,14 +164,16 @@ export class CongeComponent implements OnInit, OnDestroy {
     if (this.isManager) return;
 
     if (!this.formulaire.date_debut || !this.formulaire.date_fin) {
-      this.errorMessage = 'Veuillez remplir les dates de début et de fin.';
-      this.masquerMessages();
+      this.errorMessage = ' Veuillez remplir les dates de début et de fin.';
+      this.cdr.markForCheck();
+      this.masquerMessages(4000);
       return;
     }
 
     if (new Date(this.formulaire.date_debut) > new Date(this.formulaire.date_fin)) {
-      this.errorMessage = 'La date de début doit être antérieure à la date de fin.';
-      this.masquerMessages();
+      this.errorMessage = ' La date de début doit être antérieure à la date de fin.';
+      this.cdr.markForCheck();
+      this.masquerMessages(4000);
       return;
     }
 
@@ -173,12 +182,12 @@ export class CongeComponent implements OnInit, OnDestroy {
 
     this.congeService.creerConge(this.formulaire).subscribe({
       next: () => {
-        this.message = 'Demande de congé soumise avec succès.';
+        this.message = ' Demande de congé soumise avec succès !';
         this.formulaire = this.initialiserFormulaire();
+        this.cdr.markForCheck();
         this.loadConges();
         this.modeAffichage = 'liste';
-        this.masquerMessages();
-        this.cdr.markForCheck();
+        this.masquerMessages(5000);
       },
       error: (err) => {
         this.errorMessage =
@@ -186,10 +195,10 @@ export class CongeComponent implements OnInit, OnDestroy {
           Object.values(err?.error || {})
             .flat()
             .join(' ') ||
-          'Impossible de soumettre la demande.';
+          ' Impossible de soumettre la demande.';
         this.chargement = false;
-        this.masquerMessages();
         this.cdr.markForCheck();
+        this.masquerMessages(5000);
       },
     });
   }
@@ -210,14 +219,16 @@ export class CongeComponent implements OnInit, OnDestroy {
     if (!this.congeSelectionne?.id) return;
 
     if (!this.formulaire.date_debut || !this.formulaire.date_fin) {
-      this.errorMessage = 'Veuillez remplir les dates de début et de fin.';
-      this.masquerMessages();
+      this.errorMessage = ' Veuillez remplir les dates de début et de fin.';
+      this.cdr.markForCheck();
+      this.masquerMessages(4000);
       return;
     }
 
     if (new Date(this.formulaire.date_debut) > new Date(this.formulaire.date_fin)) {
-      this.errorMessage = 'La date de début doit être antérieure à la date de fin.';
-      this.masquerMessages();
+      this.errorMessage = ' La date de début doit être antérieure à la date de fin.';
+      this.cdr.markForCheck();
+      this.masquerMessages(4000);
       return;
     }
 
@@ -226,17 +237,17 @@ export class CongeComponent implements OnInit, OnDestroy {
 
     this.congeService.modifierConge(this.congeSelectionne.id, this.formulaire).subscribe({
       next: () => {
-        this.message = 'Congé modifié avec succès.';
+        this.message = ' Congé modifié avec succès.';
+        this.cdr.markForCheck();
         this.loadConges();
         this.modeAffichage = 'liste';
-        this.masquerMessages();
-        this.cdr.markForCheck();
+        this.masquerMessages(5000);
       },
       error: (err) => {
-        this.errorMessage = err?.error?.detail || 'Impossible de modifier ce congé.';
+        this.errorMessage = err?.error?.detail || ' Impossible de modifier ce congé.';
         this.chargement = false;
-        this.masquerMessages();
         this.cdr.markForCheck();
+        this.masquerMessages(5000);
       },
     });
   }
@@ -255,7 +266,7 @@ export class CongeComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        this.errorMessage = err?.error?.detail || 'Impossible de charger ce congé.';
+        this.errorMessage = err?.error?.detail || ' Impossible de charger ce congé.';
         this.chargement = false;
         this.masquerMessages();
         this.cdr.markForCheck();
@@ -281,17 +292,18 @@ export class CongeComponent implements OnInit, OnDestroy {
 
     this.congeService.annulerConge(id).subscribe({
       next: (res) => {
-        this.message = res.detail || 'Congé annulé avec succès.';
+        this.message = res?.detail || ' Congé annulé avec succès.';
+        console.log(' Toast annulation:', this.message);
+        this.cdr.markForCheck();
         this.loadConges();
         if (this.modeAffichage !== 'liste') this.modeAffichage = 'liste';
-        this.masquerMessages();
-        this.cdr.markForCheck();
+        this.masquerMessages(5000);
       },
       error: (err) => {
-        this.errorMessage = err?.error?.detail || "Impossible d'annuler ce congé.";
+        this.errorMessage = err?.error?.detail || " Impossible d'annuler ce congé.";
         this.chargement = false;
-        this.masquerMessages();
         this.cdr.markForCheck();
+        this.masquerMessages(5000);
       },
     });
   }
@@ -315,17 +327,18 @@ export class CongeComponent implements OnInit, OnDestroy {
 
     this.congeService.approuverConge(id).subscribe({
       next: (res) => {
-        this.message = res.detail || 'Congé approuvé avec succès.';
+        this.message = res?.detail || ' Congé approuvé avec succès !';
+        console.log(' Toast approbation:', this.message);
+        this.cdr.markForCheck();
         this.loadConges();
         if (this.modeAffichage === 'detail') this.voirDetail({ id } as CongeModel);
-        this.masquerMessages();
-        this.cdr.markForCheck();
+        this.masquerMessages(5000);
       },
       error: (err) => {
-        this.errorMessage = err?.error?.detail || "Impossible d'approuver ce congé.";
+        this.errorMessage = err?.error?.detail || " Impossible d'approuver ce congé.";
         this.chargement = false;
-        this.masquerMessages();
         this.cdr.markForCheck();
+        this.masquerMessages(5000);
       },
     });
   }
@@ -349,18 +362,19 @@ export class CongeComponent implements OnInit, OnDestroy {
       .refuserConge(this.congeARefuserId, { commentaire: this.commentaireRefus })
       .subscribe({
         next: (res) => {
-          this.message = res.detail || 'Congé refusé avec succès.';
+          this.message = res?.detail || ' Congé refusé avec succès.';
+          console.log(' Toast refus:', this.message);
           this.annulerModalRefus();
+          this.cdr.markForCheck();
           this.loadConges();
           if (this.modeAffichage === 'detail') this.modeAffichage = 'liste';
-          this.masquerMessages();
-          this.cdr.markForCheck();
+          this.masquerMessages(5000);
         },
         error: (err) => {
-          this.errorMessage = err?.error?.detail || 'Impossible de refuser ce congé.';
+          this.errorMessage = err?.error?.detail || '❌ Impossible de refuser ce congé.';
           this.chargement = false;
-          this.masquerMessages();
           this.cdr.markForCheck();
+          this.masquerMessages(5000);
         },
       });
   }
@@ -412,13 +426,19 @@ export class CongeComponent implements OnInit, OnDestroy {
     };
   }
 
-  private masquerMessages(): void {
-    timer(4000)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.message = '';
-        this.errorMessage = '';
-        this.cdr.markForCheck();
-      });
+  //  Méthode corrigée avec timer unique
+  private masquerMessages(delai: number = 5000): void {
+    // Annuler le timer précédent
+    if (this.messageTimer) {
+      clearTimeout(this.messageTimer);
+      this.messageTimer = null;
+    }
+
+    this.messageTimer = setTimeout(() => {
+      this.message = '';
+      this.errorMessage = '';
+      this.messageTimer = null;
+      this.cdr.markForCheck();
+    }, delai);
   }
 }

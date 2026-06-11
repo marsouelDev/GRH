@@ -63,20 +63,20 @@ export class CongeService {
   }
 
   approuverConge(id: number, commentaire: string = ''): Observable<any> {
-    console.log('📤 Approuver congé:', id, { commentaire });
+    console.log(' Approuver congé:', id, { commentaire });
     return this.http.put(`${this.apiUrl}${id}/approuver/`, { commentaire }).pipe(
       catchError((err) => {
-        console.error('❌ Erreur approuverConge:', err);
+        console.error(' Erreur approuverConge:', err);
         return throwError(() => err);
       }),
     );
   }
 
   refuserConge(id: number, data: { commentaire: string }): Observable<any> {
-    console.log('📤 Refuser congé:', id, data);
+    console.log(' Refuser congé:', id, data);
     return this.http.put(`${this.apiUrl}${id}/refuser/`, data).pipe(
       catchError((err) => {
-        console.error('❌ Erreur refuserConge:', err);
+        console.error(' Erreur refuserConge:', err);
         return throwError(() => err);
       }),
     );

@@ -5,13 +5,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 -->
 
-<!-- ✅ TOASTS EN DEHORS DU CONTENEUR (toujours visibles) -->
+<!-- ✅ TOASTS CENTRÉS EN HAUT (toujours visibles) -->
 <div class="toast-zone">
   <div class="toast toast--ok" *ngIf="message">
-    <i class="bi bi-check-circle-fill"></i>{{ message }}
+    <i class="bi bi-check-circle-fill"></i>
+    <span>{{ message }}</span>
   </div>
   <div class="toast toast--err" *ngIf="errorMessage">
-    <i class="bi bi-exclamation-triangle-fill"></i>{{ errorMessage }}
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ errorMessage }}</span>
   </div>
 </div>
 

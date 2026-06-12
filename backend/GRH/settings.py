@@ -158,7 +158,7 @@ USE_TZ = True
 
 # ═══════════════════════════════════════════════════════════════
 #  FICHIERS STATIQUES & MÉDIAS
-# ✅ CORRIGÉ : Utilisation du nouveau dict STORAGES (Django 5+/6)
+# CORRIGÉ : Utilisation du nouveau dict STORAGES (Django 5+/6)
 #    DEFAULT_FILE_STORAGE et STATICFILES_STORAGE sont supprimés
 #    et remplacés par STORAGES["default"] et STORAGES["staticfiles"]
 # ═══════════════════════════════════════════════════════════════
@@ -172,7 +172,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Fichiers Médias (uploads utilisateurs)
 MEDIA_URL = '/media/'
 
-# ✅ NOUVEAU SYSTÈME STORAGES (remplace DEFAULT_FILE_STORAGE + STATICFILES_STORAGE)
+#  NOUVEAU SYSTÈME STORAGES (remplace DEFAULT_FILE_STORAGE + STATICFILES_STORAGE)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",

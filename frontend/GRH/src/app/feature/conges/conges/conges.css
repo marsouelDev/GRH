@@ -1,6 +1,5 @@
 /* ================================================================
    conges.css — Angular Component — Light + Dark Mode complet
-   [class.cw--dark]="isDarkMode" sur la div racine du template
 ================================================================ */
 
 :host {
@@ -10,7 +9,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
-   TOASTS (position fixe, centré en haut, z-index très élevé)
+   TOASTS
 ══════════════════════════════════════════════════════════════ */
 .toast-zone {
   position: fixed !important;
@@ -85,7 +84,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
-   WRAPPER — LIGHT (défaut)
+   WRAPPER — LIGHT
 ══════════════════════════════════════════════════════════════ */
 .cw {
   --blue: #3b82f6;
@@ -1225,4 +1224,3 @@
     font-size: 1.25rem;
   }
 }
-  

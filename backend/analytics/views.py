@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from django.db.models import Count, Q, Sum, Avg, F
 from django.core.cache import cache
 from rest_framework.views import APIView
@@ -28,6 +28,21 @@ STATUT_LABELS = {
     'JOUR_FERIE': 'Jour férié',
     'REPOS': 'Repos',
 }
+
+
+# ═══════════════════════════════════════════════════════════════
+# FONCTION HELPER POUR NORMALISATION DES DATES
+# ═══════════════════════════════════════════════════════════════
+def normalize_datetime(d):
+    """
+    Convertit date ou datetime en datetime pour permettre la comparaison.
+    Python 3 ne permet pas de comparer datetime.date avec datetime.datetime directement.
+    """
+    if isinstance(d, datetime):
+        return d
+    if isinstance(d, date):
+        return datetime.combine(d, datetime.min.time())
+    return d
 
 
 class DashboardStatsView(APIView):
@@ -128,7 +143,7 @@ class DashboardStatsView(APIView):
                 'retards': p_mois.filter(statut='RETARD').count(),
             })
 
-        # --- Répartition Statut (Camembert) --- ✅ CORRIGÉ
+        # --- Répartition Statut (Camembert) ---
         repartition_statut = list(
             presences_today.values('statut')
             .annotate(total=Count('id'))
@@ -163,7 +178,7 @@ class DashboardStatsView(APIView):
         justifs_validees = Justification.objects.filter(statut='VALIDEE').count()
         justifs_rejetees = Justification.objects.filter(statut='REJETEE').count()
 
-        # --- Activités Récentes --- ✅ CORRIGÉ (tri par vraie date)
+        # --- Activités Récentes --- ✅ CORRIGÉ
         activites = []
         
         dernieres_presences = Presence.objects.select_related('employe').order_by('-date')[:5]
@@ -173,7 +188,7 @@ class DashboardStatsView(APIView):
                 'icon': 'bi-clock-history',
                 'text': f"{p.employe.prenom} {p.employe.nom} - {p.get_statut_display()}",
                 'time': p.date.strftime('%d/%m/%Y'),
-                '_sort_key': p.date,
+                '_sort_key': p.date,  # datetime.date
             })
         
         dernieres_conges = Conge.objects.select_related('employe').order_by('-date_demande')[:3]
@@ -183,11 +198,15 @@ class DashboardStatsView(APIView):
                 'icon': 'bi-calendar-check',
                 'text': f"Congé de {c.employe.prenom} {c.employe.nom}",
                 'time': c.date_demande.strftime('%d/%m/%Y'),
-                '_sort_key': c.date_demande,
+                '_sort_key': c.date_demande,  # datetime.datetime
             })
 
-        # Tri par date réelle
-        activites = sorted(activites, key=lambda x: x['_sort_key'], reverse=True)[:8]
+        # ✅ Tri avec normalisation des types (date vs datetime)
+        activites = sorted(
+            activites, 
+            key=lambda x: normalize_datetime(x['_sort_key']), 
+            reverse=True
+        )[:8]
         
         # Suppression de la clé de tri avant envoi
         for a in activites:

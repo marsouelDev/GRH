@@ -19,7 +19,7 @@ CACHE_DASHBOARD_TIMEOUT = 300  # 5 minutes
 CACHE_KEY_DASHBOARD = 'dashboard_stats_{user_id}'
 CACHE_KEY_EMPLOYES = 'dashboard_employes_stats'
 
-# Mapping manuel des statuts (remplace Presence.STATUT_CHOICES)
+# Mapping manuel des statuts
 STATUT_LABELS = {
     'PRESENT': 'Présent',
     'ABSENT': 'Absent',
@@ -128,21 +128,30 @@ class DashboardStatsView(APIView):
                 'retards': p_mois.filter(statut='RETARD').count(),
             })
 
-        # --- Répartition Statut (Camembert) ---
+        # --- Répartition Statut (Camembert) --- ✅ CORRIGÉ
         repartition_statut = list(
             presences_today.values('statut')
             .annotate(total=Count('id'))
-            .order_by('-total')
         )
+        stat_counts = {item['statut']: item['total'] for item in repartition_statut}
         
-        # Utilisation du dictionnaire STATUT_LABELS au lieu de Presence.STATUT_CHOICES
+        # On force la présence des 3 statuts pour éviter que le graphique ne casse
         repartition_statut_formatee = [
             {
-                'label': STATUT_LABELS.get(item['statut'], item['statut']),
-                'value': item['total'],
-                'statut': item['statut']
+                'label': STATUT_LABELS.get('PRESENT', 'Présent'),
+                'value': stat_counts.get('PRESENT', 0),
+                'statut': 'PRESENT'
+            },
+            {
+                'label': STATUT_LABELS.get('ABSENT', 'Absent'),
+                'value': stat_counts.get('ABSENT', 0),
+                'statut': 'ABSENT'
+            },
+            {
+                'label': STATUT_LABELS.get('RETARD', 'Retard'),
+                'value': stat_counts.get('RETARD', 0),
+                'statut': 'RETARD'
             }
-            for item in repartition_statut
         ]
 
         # --- KPIs Congés & Justifications ---
@@ -154,10 +163,9 @@ class DashboardStatsView(APIView):
         justifs_validees = Justification.objects.filter(statut='VALIDEE').count()
         justifs_rejetees = Justification.objects.filter(statut='REJETEE').count()
 
-        # --- Activités Récentes ---
+        # --- Activités Récentes --- ✅ CORRIGÉ (tri par vraie date)
         activites = []
         
-        # Présences récentes
         dernieres_presences = Presence.objects.select_related('employe').order_by('-date')[:5]
         for p in dernieres_presences:
             activites.append({
@@ -165,9 +173,9 @@ class DashboardStatsView(APIView):
                 'icon': 'bi-clock-history',
                 'text': f"{p.employe.prenom} {p.employe.nom} - {p.get_statut_display()}",
                 'time': p.date.strftime('%d/%m/%Y'),
+                '_sort_key': p.date,
             })
         
-        #  Utilisation de 'date_demande' au lieu de 'date_soumission'
         dernieres_conges = Conge.objects.select_related('employe').order_by('-date_demande')[:3]
         for c in dernieres_conges:
             activites.append({
@@ -175,10 +183,15 @@ class DashboardStatsView(APIView):
                 'icon': 'bi-calendar-check',
                 'text': f"Congé de {c.employe.prenom} {c.employe.nom}",
                 'time': c.date_demande.strftime('%d/%m/%Y'),
+                '_sort_key': c.date_demande,
             })
 
-        # Trier par date et limiter à 8
-        activites = sorted(activites, key=lambda x: x['time'], reverse=True)[:8]
+        # Tri par date réelle
+        activites = sorted(activites, key=lambda x: x['_sort_key'], reverse=True)[:8]
+        
+        # Suppression de la clé de tri avant envoi
+        for a in activites:
+            del a['_sort_key']
 
         # 3. CONSTRUCTION DE LA RÉPONSE
         response_data = {

@@ -59,12 +59,12 @@ INSTALLED_APPS = [
 
 
 # ═══════════════════════════════════════════════════════════════
-# 3. MIDDLEWARE
+#  MIDDLEWARE
 # ═══════════════════════════════════════════════════════════════
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",         
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -111,7 +111,7 @@ SIMPLE_JWT = {
 
 
 # ═══════════════════════════════════════════════════════════════
-# 5. BASE DE DONNÉES (PostgreSQL — Render)
+#  BASE DE DONNÉES (PostgreSQL — Render)
 # ═══════════════════════════════════════════════════════════════
 DATABASES = {
     'default': dj_database_url.config(
@@ -158,6 +158,9 @@ USE_TZ = True
 
 # ═══════════════════════════════════════════════════════════════
 #  FICHIERS STATIQUES & MÉDIAS
+# ✅ CORRIGÉ : Utilisation du nouveau dict STORAGES (Django 5+/6)
+#    DEFAULT_FILE_STORAGE et STATICFILES_STORAGE sont supprimés
+#    et remplacés par STORAGES["default"] et STORAGES["staticfiles"]
 # ═══════════════════════════════════════════════════════════════
 
 # Fichiers Statiques
@@ -165,11 +168,19 @@ STATIC_URL = "static/"
 _static_dir = BASE_DIR / "static"
 STATICFILES_DIRS = [_static_dir] if _static_dir.exists() else []
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Fichiers Médias — Cloudinary (uploads utilisateurs)
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# Fichiers Médias (uploads utilisateurs)
 MEDIA_URL = '/media/'
+
+# ✅ NOUVEAU SYSTÈME STORAGES (remplace DEFAULT_FILE_STORAGE + STATICFILES_STORAGE)
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
@@ -212,13 +223,13 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp-relay.brevo.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False   
+EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 
 # ⏱️ CRUCIAL : Timeout pour éviter que Gunicorn ne tue le worker si Brevo est lent
-EMAIL_TIMEOUT = 10 
+EMAIL_TIMEOUT = 10
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -228,11 +239,11 @@ if not DEBUG:
     # Force HTTPS
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    
+
     # Cookies sécurisés
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    
+
     # Protection supplémentaire
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -266,7 +277,6 @@ LOGGING = {
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
             'propagate': False,
         },
-        # Logger personnalisé pour nos vues (RH, employees, etc.)
         'RH': {
             'handlers': ['console'],
             'level': 'INFO',
@@ -301,3 +311,23 @@ CACHE_KEY_PREFIX = 'grh_'
 # Créer dans le dashboard Render → New Cron Job :
 # 1. python manage.py verifier_expiration_contrats --jours=7   → Schedule: 0 8 * * *
 # 2. python manage.py verifier_expiration_contrats --jours=30  → Schedule: 0 9 * * 1
+
+
+# ═══════════════════════════════════════════════════════════════
+#  JAZZMIN (interface admin personnalisée)
+# ═══════════════════════════════════════════════════════════════
+JAZZMIN_SETTINGS = {
+    "site_title": "WorkFlow",
+    "site_header": "Gestion des ressource humaine",
+    "site_brand": "Ma Super Entreprise",
+    "welcome_sign": "Bienvenue dans l'espace d'administration",
+    "search_model": ["auth.User"],  # Barre de recherche globale
+    "show_sidebar": True,
+    "navigation_expanded": True,
+}
+
+# Pour changer les couleurs (ex: passer en mode sombre, changer le thème Bootstrap)
+JAZZMIN_UI_TWEAKS = {
+    "theme": "flatly",  # Thème Bootstrap de base
+    "dark_mode_theme": "darkly",
+}

@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta
 from django.db.models import Count, Q, Sum, Avg, F
 from django.core.cache import cache
+from django.utils import timezone  # ✅ IMPORTANT
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -35,13 +36,18 @@ STATUT_LABELS = {
 # ═══════════════════════════════════════════════════════════════
 def normalize_datetime(d):
     """
-    Convertit date ou datetime en datetime pour permettre la comparaison.
-    Python 3 ne permet pas de comparer datetime.date avec datetime.datetime directement.
+    Convertit date ou datetime en datetime AVEC timezone pour permettre la comparaison.
+    Django utilise USE_TZ = True, donc tous les datetimes doivent être "aware".
     """
     if isinstance(d, datetime):
+        # Si c'est déjà un datetime mais sans timezone (naive), on ajoute la timezone
+        if timezone.is_naive(d):
+            return timezone.make_aware(d)
         return d
     if isinstance(d, date):
-        return datetime.combine(d, datetime.min.time())
+        # Convertir date en datetime à minuit, puis ajouter la timezone
+        dt = datetime.combine(d, datetime.min.time())
+        return timezone.make_aware(dt)
     return d
 
 
@@ -188,7 +194,7 @@ class DashboardStatsView(APIView):
                 'icon': 'bi-clock-history',
                 'text': f"{p.employe.prenom} {p.employe.nom} - {p.get_statut_display()}",
                 'time': p.date.strftime('%d/%m/%Y'),
-                '_sort_key': p.date,  # datetime.date
+                '_sort_key': p.date,  # datetime.date (naive)
             })
         
         dernieres_conges = Conge.objects.select_related('employe').order_by('-date_demande')[:3]
@@ -198,10 +204,10 @@ class DashboardStatsView(APIView):
                 'icon': 'bi-calendar-check',
                 'text': f"Congé de {c.employe.prenom} {c.employe.nom}",
                 'time': c.date_demande.strftime('%d/%m/%Y'),
-                '_sort_key': c.date_demande,  # datetime.datetime
+                '_sort_key': c.date_demande,  # datetime.datetime (aware avec timezone)
             })
 
-        # ✅ Tri avec normalisation des types (date vs datetime)
+        # ✅ Tri avec normalisation des types ET des timezones
         activites = sorted(
             activites, 
             key=lambda x: normalize_datetime(x['_sort_key']), 

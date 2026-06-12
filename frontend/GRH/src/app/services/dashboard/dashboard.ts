@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { EmployesStats, DashboardStats } from '../../models/analytics';
 
@@ -7,7 +7,6 @@ import { EmployesStats, DashboardStats } from '../../models/analytics';
   providedIn: 'root',
 })
 export class Dashboard {
-  @Injectable({ providedIn: 'root' })
   private http = inject(HttpClient);
   private apiUrl = 'https://workflow-u1mk.onrender.com';
 

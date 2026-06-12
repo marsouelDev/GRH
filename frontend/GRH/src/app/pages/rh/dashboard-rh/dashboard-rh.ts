@@ -3,9 +3,9 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
-  OnDestroy,
   inject,
 } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartData, ChartOptions } from 'chart.js';
@@ -18,24 +18,20 @@ import { DashboardStats } from '../../../models/analytics';
 @Component({
   selector: 'app-dashboard-rh',
   standalone: true,
-  imports: [CommonModule, DatePipe, BaseChartDirective],
+  imports: [CommonModule, RouterModule, DatePipe, BaseChartDirective],
   templateUrl: './dashboard-rh.html',
-  styleUrl: './dashboard-rh.css',
-  // ✅ OPTIMISATION : OnPush pour de meilleures performances
+  styleUrls: ['./dashboard-rh.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DashboardRh implements OnInit, OnDestroy {
+export class DashboardRh implements OnInit {
   private authService = inject(AuthService);
   private analyticsService = inject(Dashboard);
   private themeService = inject(ThemeService);
-
-  // ✅ ChangeDetectorRef injecté pour contrôler la détection de changements
   private cdr = inject(ChangeDetectorRef);
 
   today = new Date();
   chargement = true;
   errorMessage = '';
-
   stats!: DashboardStats;
 
   get isDarkMode(): boolean {
@@ -225,24 +221,22 @@ export class DashboardRh implements OnInit, OnDestroy {
     this.chargerDashboard();
   }
 
-  ngOnDestroy(): void {}
-
   chargerDashboard(): void {
     this.chargement = true;
     this.errorMessage = '';
-    this.cdr.markForCheck(); // ✅ Notifier Angular du début du chargement
+    this.cdr.markForCheck();
 
     this.analyticsService.getDashboardStats().subscribe({
       next: (data) => {
         this.stats = data;
         this.mettreAJourGraphiques(data);
         this.chargement = false;
-        this.cdr.markForCheck(); // ✅ Notifier Angular des nouvelles données
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.chargement = false;
         this.errorMessage = err?.error?.detail || 'Erreur lors du chargement du dashboard.';
-        this.cdr.markForCheck(); // ✅ Notifier Angular de l'erreur
+        this.cdr.markForCheck();
       },
     });
   }

@@ -52,9 +52,8 @@ export class DashboardEmploye implements OnInit {
   tousLesConges: any[] = [];
   mesConges: any[] = [];
 
-  // ══════════════════════════════════════════════════════════
   // RECHERCHE & FILTRES DU TABLEAU
-  // ══════════════════════════════════════════════════════════
+
   rechercheConge = '';
   filtreStatut: 'TOUS' | 'EN_ATTENTE' | 'APPROUVE' | 'REFUSE' = 'TOUS';
   triColonne: 'date_debut' | 'date_fin' | 'statut' | 'type_conge' = 'date_debut';
@@ -62,9 +61,7 @@ export class DashboardEmploye implements OnInit {
   pageActuelle = 1;
   itemsParPage = 5;
 
-  // ══════════════════════════════════════════════════════════
   // GRAPHIQUE
-  // ══════════════════════════════════════════════════════════
   public barChartType: 'bar' = 'bar';
   public barChartData: ChartData<'bar'> = {
     labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
@@ -142,9 +139,8 @@ export class DashboardEmploye implements OnInit {
     this.chargerStats();
   }
 
-  // ══════════════════════════════════════════════════════════
   // CHARGEMENT DES STATS
-  // ══════════════════════════════════════════════════════════
+
   chargerStats(): void {
     this.chargement = true;
     this.errorMessage = '';
@@ -227,10 +223,7 @@ export class DashboardEmploye implements OnInit {
       },
     });
   }
-
-  // ══════════════════════════════════════════════════════════
   // FILTRAGE PAR NOM
-  // ══════════════════════════════════════════════════════════
   private filtrerMesConges(conges: any[]): any[] {
     if (!this.user) return [];
 
@@ -263,9 +256,7 @@ export class DashboardEmploye implements OnInit {
     });
   }
 
-  // ══════════════════════════════════════════════════════════
   // HELPERS STATUT
-  // ══════════════════════════════════════════════════════════
   isStatut(statut: string, valeurs: string[]): boolean {
     if (!statut) return false;
     const s = statut.toString().toUpperCase().trim().replace(/\s+/g, '_');
@@ -288,9 +279,7 @@ export class DashboardEmploye implements OnInit {
     return Math.max(1, jours);
   }
 
-  // ══════════════════════════════════════════════════════════
   // ACTIONS DU TABLEAU
-  // ══════════════════════════════════════════════════════════
   toggleTousLesConges(): void {
     this.afficherTousLesConges = !this.afficherTousLesConges;
     this.pageActuelle = 1;
@@ -341,9 +330,7 @@ export class DashboardEmploye implements OnInit {
     }
   }
 
-  // ══════════════════════════════════════════════════════════
   // GETTERS
-  // ══════════════════════════════════════════════════════════
   get congesAffiches(): any[] {
     return this.afficherTousLesConges ? this.tousLesConges : this.mesConges;
   }
@@ -441,9 +428,9 @@ export class DashboardEmploye implements OnInit {
     return `${prenom} ${nom}`.trim() || 'Employé';
   }
 
-  // ══════════════════════════════════════════════════════════
+ 
   // HELPERS D'AFFICHAGE
-  // ══════════════════════════════════════════════════════════
+
   getNomEmploye(conge: any): string {
     if (!conge) return 'Employé';
     if (conge.employe_nom && typeof conge.employe_nom === 'string') {

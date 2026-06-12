@@ -123,8 +123,7 @@
             </div>
           </div>
           <div class="period-card__bar">
-            <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_presence">
-            </div>
+            <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_presence"></div>
           </div>
         </div>
 
@@ -151,8 +150,7 @@
             </div>
           </div>
           <div class="period-card__bar">
-            <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_semaine">
-            </div>
+            <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_semaine"></div>
           </div>
         </div>
 
@@ -179,8 +177,7 @@
             </div>
           </div>
           <div class="period-card__bar">
-            <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_mois">
-            </div>
+            <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_mois"></div>
           </div>
         </div>
 
@@ -207,8 +204,7 @@
             </div>
           </div>
           <div class="period-card__bar">
-            <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_annee">
-            </div>
+            <div class="period-card__bar-fill" [style.width.%]="stats.kpis.taux_annee"></div>
           </div>
         </div>
 
@@ -247,8 +243,7 @@
             </div>
           </div>
           <div class="chart-body">
-            <canvas baseChart [data]="barChartData" [type]="barChartType" [options]="barChartOptions">
-            </canvas>
+            <canvas baseChart [data]="barChartData" [type]="barChartType" [options]="barChartOptions"></canvas>
           </div>
         </div>
 
@@ -264,8 +259,8 @@
           </div>
           <div class="chart-legend chart-legend--col" *ngIf="stats && stats.repartition_statut">
             <span class="chart-legend__item" *ngFor="let r of stats.repartition_statut; let i = index">
-              <span class="chart-legend__sq" [style.background]="i === 0 ? '#1D9E75' : i === 1 ? '#E24B4A' : '#EF9F27'">
-              </span>
+              <span class="chart-legend__sq"
+                [style.background]="i === 0 ? '#1D9E75' : i === 1 ? '#E24B4A' : '#EF9F27'"></span>
               {{ r.label }}
               <span class="chart-legend__pct">
                 {{ totalDuJour > 0 ? (r.value / totalDuJour * 100 | number:'1.0-0') + '%' : '0%' }}
@@ -277,8 +272,8 @@
               <span class="chart-donut-center__val">{{ totalDuJour }}</span>
               <span class="chart-donut-center__lbl">total</span>
             </div>
-            <canvas baseChart [data]="doughnutChartData" [type]="doughnutChartType" [options]="doughnutChartOptions">
-            </canvas>
+            <canvas baseChart [data]="doughnutChartData" [type]="doughnutChartType"
+              [options]="doughnutChartOptions"></canvas>
           </div>
         </div>
 
@@ -304,8 +299,7 @@
             </div>
           </div>
           <div class="chart-body">
-            <canvas baseChart [data]="lineChartData" [type]="lineChartType" [options]="lineChartOptions">
-            </canvas>
+            <canvas baseChart [data]="lineChartData" [type]="lineChartType" [options]="lineChartOptions"></canvas>
           </div>
         </div>
 

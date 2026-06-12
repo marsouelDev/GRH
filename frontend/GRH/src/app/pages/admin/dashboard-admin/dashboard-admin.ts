@@ -21,15 +21,12 @@ import { DashboardStats } from '../../../models/analytics';
   imports: [CommonModule, RouterModule, DatePipe, BaseChartDirective],
   templateUrl: './dashboard-admin.html',
   styleUrls: ['./dashboard-admin.css'],
-  // ✅ OPTIMISATION : OnPush pour de meilleures performances
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardAdmin implements OnInit {
   private authService = inject(AuthService);
   private analyticsService = inject(Dashboard);
   private themeService = inject(ThemeService);
-
-  // ✅ ChangeDetectorRef pour contrôler la détection de changements
   private cdr = inject(ChangeDetectorRef);
 
   today = new Date();
@@ -227,19 +224,19 @@ export class DashboardAdmin implements OnInit {
   chargerDashboard(): void {
     this.chargement = true;
     this.errorMessage = '';
-    this.cdr.markForCheck(); // ✅ Notifier Angular du début du chargement
+    this.cdr.markForCheck();
 
     this.analyticsService.getDashboardStats().subscribe({
       next: (data) => {
         this.stats = data;
         this.mettreAJourGraphiques(data);
         this.chargement = false;
-        this.cdr.markForCheck(); // ✅ Notifier Angular des nouvelles données
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.chargement = false;
         this.errorMessage = err?.error?.detail || 'Erreur lors du chargement du dashboard.';
-        this.cdr.markForCheck(); // ✅ Notifier Angular de l'erreur
+        this.cdr.markForCheck();
       },
     });
   }

@@ -13,10 +13,7 @@ TokenRefreshViewDecorated = extend_schema_view(post=extend_schema(summary="Rafra
 TokenBlacklistViewDecorated = extend_schema_view(post=extend_schema(summary="Déconnexion (Blacklist du token)", tags=["Authentification"]))(TokenBlacklistView)
 
 def health_check(request):
-    """
-    Vue simple pour la racine du site.
-    Évite le 404 quand Render fait un health check sur /.
-    """
+  
     return JsonResponse({
         'status': 'ok',
         'message': 'API Workflow RH - Gestion des Ressources Humaines',
